@@ -295,6 +295,27 @@ class RemoteJSONAPI extends Remote {
       '#maxlength' => 128,
       '#description' => t('The JSON API Url for browser.'),
     );
+    $return['source_remote_jsonapi']['params'] = [
+      '#type' => 'textarea',
+      '#title' => t('Params'),
+      '#description' => t('The possible values for sorting. Enter one value per line, in the format key|label.<br />E.g.<br />include|field_image<br />fields[media--image]|name,field_category,field_image'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['params']) ? $settings['source_remote_jsonapi']['params'] : '',
+      '#rows' => 10,
+    ];
+    $return['source_remote_jsonapi']['sort_option_list'] = [
+      '#type' => 'textarea',
+      '#title' => t('Sorting option list'),
+      '#description' => t('The query parameters. Enter one per line, in the format key|value. The first value will be the default.<br />E.g.<br />name|Name<br />-created|Created'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['sort_option_list']) ? $settings['source_remote_jsonapi']['sort_option_list'] : '',
+      '#rows' => 5,
+    ];
+    $return['source_remote_jsonapi']['filter_mapping'] = [
+      '#type' => 'textarea',
+      '#title' => t('Filter mappings'),
+      '#description' => t('The query parameters. Enter one per line, in the format key|value. The first value will be the default.<br />E.g.<br />name|Name<br />-created|Created'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['filter_mapping']) ? $settings['source_remote_jsonapi']['filter_mapping'] : '',
+      '#rows' => 5,
+    ];
     $return['source_remote_jsonapi']['items_per_page'] = array(
       '#type' => 'number',
       '#min' => 1,
@@ -310,13 +331,6 @@ class RemoteJSONAPI extends Remote {
       '#description' => t('Image style to use in browser.'),
       '#default_value' => isset($settings['source_remote_jsonapi']['image_style']) ? $settings['source_remote_jsonapi']['image_style'] : self::REMOTE_JSONAPI_IMAGE_STYLE,
     );
-    $return['source_remote_jsonapi']['sort_option_list'] = [
-      '#type' => 'textarea',
-      '#title' => t('Sorting option list'),
-      '#description' => t('The possible values for sorting. Enter one value per line, in the format key|label. E.g. name|Name, -created|Created'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['sort_option_list']) ? $settings['source_remote_jsonapi']['sort_option_list'] : '',
-      '#rows' => 5,
-    ];
 
     return $return;
   }
