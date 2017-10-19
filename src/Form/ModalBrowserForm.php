@@ -328,6 +328,7 @@ class ModalBrowserForm extends FormBase {
     if (empty($response->data)) {
       $render['lister']['media']['empty'] = [
         '#markup' => $this->t('No results.'),
+        '#attributes' => ['class' => ['no-result']],
       ];
     }
 
