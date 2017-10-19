@@ -28,6 +28,7 @@ class ModalBrowserForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $form_mode = NULL, $field_name = NULL) {
+    $form['#attached']['library'][] = 'filefield_sources_jsonapi/modal';
     $field_widget_settings = \Drupal::entityTypeManager()
       ->getStorage('entity_form_display')
       ->load($entity_type . '.' . $bundle . '.' . $form_mode)->getComponent($field_name);
@@ -94,10 +95,10 @@ class ModalBrowserForm extends FormBase {
     $response = $this->getJsonApiCall($rest_api_url);
     if (200 === $response->getStatusCode()) {
       $response = json_decode($response->getBody());
-      $form['tml_entity_browser'] = $this->renderFormElements($response, $form_state);
+      $form['filefield_filesources_jsonapi_form'] = $this->renderFormElements($response, $form_state);
     }
 
-    $form['#prefix'] = '<div id="tml_media-modal-form">';
+    $form['#prefix'] = '<div id="filefield-sources-jsonapi-browser-form">';
     $form['#suffix'] = '</div>';
 
     // If cardinality is 1, don't display submit button - autosubmit on slelect.
@@ -124,10 +125,10 @@ class ModalBrowserForm extends FormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     $selected_media = array_values(array_filter($form_state->getUserInput()['media_id_select']));
-    if (count($selected_media) > 1) {
+    /*if (count($selected_media) > 1) {
       $form_state->setErrorByName('tml_media_image_url', $this->t('You can select only one media.'));
       return;
-    }
+    }*/
     if ($media_id = $selected_media[0]) {
       $settings = $form_state->get('jsonapi_settings');
 
@@ -185,7 +186,7 @@ class ModalBrowserForm extends FormBase {
    * Implements the pager submit handler for the ajax call.
    */
   public function ajaxPagerCallback(array &$form, FormStateInterface $form_state) {
-    return $form['tml_entity_browser']['lister'];
+    return $form['filefield_filesources_jsonapi_form']['lister'];
   }
 
   /**
@@ -212,7 +213,7 @@ class ModalBrowserForm extends FormBase {
         '#type' => 'status_messages',
         '#weight' => -10,
       ];
-      $response->addCommand(new HtmlCommand('#tml_media-modal-form', $form));
+      $response->addCommand(new HtmlCommand('#filefield-sources-jsonapi-browser-form', $form));
     }
     else {
       $image_url = $form_state->get('fetched_image_url');
@@ -233,7 +234,7 @@ class ModalBrowserForm extends FormBase {
     $render = [];
     $render['filter'] = [
       '#type' => 'container',
-      '#attributes' => ['id' => 'tml_media_entity_filter', 'class' => ['media-browser-lister']],
+      '#attributes' => ['id' => 'filefield_filesources_jsonapi_filter', 'class' => ['browser-filter']],
     ];
     $render['filter']['name'] = [
       '#title' => $this->t('File name'),
@@ -257,7 +258,7 @@ class ModalBrowserForm extends FormBase {
         '#submit' => ['::ajaxSubmitFilterForm'],
         '#ajax' => [
           'callback' => '::ajaxPagerCallback',
-          'wrapper' => 'tml_media_entity_lister',
+          'wrapper' => 'filefield_filesources_jsonapi_lister',
         ],
       ];
     }
@@ -268,14 +269,14 @@ class ModalBrowserForm extends FormBase {
       '#submit' => ['::ajaxSubmitFilterForm'],
       '#ajax' => [
         'callback' => '::ajaxPagerCallback',
-        'wrapper' => 'tml_media_entity_lister',
+        'wrapper' => 'filefield_filesources_jsonapi_lister',
       ],
     ];
 
     $render['lister'] = [
       '#type' => 'container',
-      '#attributes' => ['class' => ['media-browser-lister']],
-      '#prefix' => '<div id="tml_media_entity_lister">',
+      '#attributes' => ['class' => ['browser-lister']],
+      '#prefix' => '<div id="filefield_filesources_jsonapi_lister">',
       '#suffix' => '</div>',
     ];
 
@@ -334,7 +335,7 @@ class ModalBrowserForm extends FormBase {
         '#submit' => ['::ajaxSubmitPagerPrev'],
         '#ajax' => [
           'callback' => '::ajaxPagerCallback',
-          'wrapper' => 'tml_media_entity_lister',
+          'wrapper' => 'filefield_filesources_jsonapi_lister',
         ],
       ];
     }
@@ -346,7 +347,7 @@ class ModalBrowserForm extends FormBase {
         '#submit' => ['::ajaxSubmitPagerNext'],
         '#ajax' => [
           'callback' => '::ajaxPagerCallback',
-          'wrapper' => 'tml_media_entity_lister',
+          'wrapper' => 'filefield_filesources_jsonapi_lister',
         ],
       ];
     }

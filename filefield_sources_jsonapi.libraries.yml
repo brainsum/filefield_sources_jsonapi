@@ -1,5 +1,5 @@
-filefield-sources-jsonapi:
-  version: VERSION
+modal:
+  version: beta-1
   css:
     component:
-      css/filefield_sources_jsonapi.css: {}
+      css/modal.css: {}
