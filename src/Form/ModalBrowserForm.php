@@ -44,10 +44,6 @@ class ModalBrowserForm extends FormBase {
 
     $rest_api_url = $settings['api_url'];
 
-    $myConfig = \Drupal::config('filefield_sources_jsonapi');
-    $username = $myConfig->get('username');
-    $password = $myConfig->get('password');
-
     $page = $form_state->get('page');
     if ($page === NULL) {
       $form_state->set('page', 0);
@@ -60,11 +56,10 @@ class ModalBrowserForm extends FormBase {
     $query['page[limit]'] = $settings['items_per_page'];
     $query['page[offset]'] = $page * $query['page[limit]'];
 
-    // @todo - move to field widget config.
-    $query['fields[media--image]'] = 'name,thumbnail,field_category,field_image';
-    $query['include'] = 'thumbnail,field_image,field_category';
-    $query['fields[file--file]'] = 'url';
-    $query['fields[taxonomy_term--category]'] = 'name';
+    foreach (explode("\n", $settings['params']) as $param) {
+      list($key, $value) = explode('|', $param);
+      $query[$key] = $value;
+    }
     // Filter mappings.
     $filterMapping = [
       'name' => 'name',
@@ -96,10 +91,7 @@ class ModalBrowserForm extends FormBase {
     $query_str = UrlHelper::buildQuery($query);
     $rest_api_url = $rest_api_url . '?' . $query_str;
 
-    $client = new Client();
-    $response = $client->get($rest_api_url, [
-      'headers' => ['Authorization' => 'Basic ' . base64_encode("$username:$password")],
-    ]);
+    $response = $this->getJsonApiCall($rest_api_url);
     if (200 === $response->getStatusCode()) {
       $response = json_decode($response->getBody());
       $form['tml_entity_browser'] = $this->renderFormElements($response, $form_state);
@@ -108,18 +100,21 @@ class ModalBrowserForm extends FormBase {
     $form['#prefix'] = '<div id="tml_media-modal-form">';
     $form['#suffix'] = '</div>';
 
-    $form['actions'] = [
-      '#type' => 'actions',
-    ];
+    // If cardinality is 1, don't display submit button - autosubmit on slelect.
+    if ($settings['cardinality'] != 1) {
+      $form['actions'] = [
+        '#type' => 'actions',
+      ];
 
-    $form['actions']['submit'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Submit'),
-      '#ajax' => [
-        'callback' => '::ajaxSubmitForm',
-        'event' => 'click',
-      ],
-    ];
+      $form['actions']['submit'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Submit selected'),
+        '#ajax' => [
+          'callback' => '::ajaxSubmitForm',
+          'event' => 'click',
+        ],
+      ];
+    }
 
     return $form;
   }
@@ -133,32 +128,25 @@ class ModalBrowserForm extends FormBase {
       $form_state->setErrorByName('tml_media_image_url', $this->t('You can select only one media.'));
       return;
     }
-    $media_id = $selected_media[0];
+    if ($media_id = $selected_media[0]) {
+      $settings = $form_state->get('jsonapi_settings');
 
-    $myConfig = \Drupal::config('filefield_sources_jsonapi');
-    $username = $myConfig->get('username');
-    $password = $myConfig->get('password');
+      $api_url_base = $this->getApiBaseUrl($settings['api_url']);
+      $rest_api_url = $api_url_base . '/jsonapi/file/file/' . $media_id;
+      $query['fields[file--file]'] = 'url';
+      $query_str = UrlHelper::buildQuery($query);
+      $rest_api_url = $rest_api_url . '?' . $query_str;
 
-    $settings = $form_state->get('jsonapi_settings');
-
-    $api_url_base = $this->getApiBaseUrl($settings['api_url']);
-    $rest_api_url = $api_url_base . '/file/file/' . $media_id;
-    $query['fields[file--file]'] = 'url';
-    $query_str = UrlHelper::buildQuery($query);
-    $rest_api_url = $rest_api_url . '?' . $query_str;
-
-    $client = new Client();
-    $response = $client->get($rest_api_url, [
-      'headers' => ['Authorization' => 'Basic ' . base64_encode("$username:$password")],
-    ]);
-    if (200 === $response->getStatusCode()) {
-      $response = json_decode($response->getBody());
-      $image_url = $response->data->url;
+      $response = $this->getJsonApiCall($rest_api_url);
+      if (200 === $response->getStatusCode()) {
+        $response = json_decode($response->getBody());
+        $image_url = $api_url_base . $response->data->attributes->url;
+      }
+      if (!$image_url && curl_init($image_url)) {
+        $form_state->setErrorByName('tml_media_image_url', $this->t("Can't fetch image from remote server."));
+      }
+      $form_state->set('fetched_image_url', $image_url);
     }
-    if (!$image_url) {
-      $form_state->setErrorByName('tml_media_image_url', $this->t("Can't fetch image from remote server."));
-    }
-    $form_state->set('fetched_image_url', $image_url);
   }
 
   /**
@@ -227,7 +215,7 @@ class ModalBrowserForm extends FormBase {
       $response->addCommand(new HtmlCommand('#tml_media-modal-form', $form));
     }
     else {
-      $image_url = $form_state->get('tml_media_image_url');
+      $image_url = $form_state->get('fetched_image_url');
       $response->addCommand(new InvokeCommand('.filefield-source-remote_jsonapi input[type=text]', 'val', [$image_url]));
       $response->addCommand(new InvokeCommand('.filefield-source-remote_jsonapi input[type=submit]', 'mousedown'));
       $response->addCommand(new CloseModalDialogCommand());
@@ -266,6 +254,11 @@ class ModalBrowserForm extends FormBase {
         '#type' => 'select',
         '#options' => $settings['sort_options'],
         '#attributes' => ['class' => ['sort-by']],
+        '#submit' => ['::ajaxSubmitFilterForm'],
+        '#ajax' => [
+          'callback' => '::ajaxPagerCallback',
+          'wrapper' => 'tml_media_entity_lister',
+        ],
       ];
     }
     $render['filter']['submit'] = [
@@ -291,13 +284,6 @@ class ModalBrowserForm extends FormBase {
       '#attributes' => ['class' => ['media-lister']],
     ];
     foreach ($response->data as $data) {
-//      $media_id = $data->id;
-      /*foreach ($response->included as $included) {
-        if ($data->relationships->field_image->data->type === $included->type && $data->relationships->field_image->data->id === $included->id) {
-          $media_id = $included->attributes->url;
-          break;
-        }
-      }*/
       $media_id = $data->relationships->field_image->data->id;
       $thumbnail_url = NULL;
       foreach ($response->included as $included) {
@@ -319,14 +305,12 @@ class ModalBrowserForm extends FormBase {
           '#attributes' => ['name' => "media_id_select[$media_id]"],
           '#default_value' => NULL,
         ];
-        /*if ($settings['cardinality'] === 1) {
+        if ($settings['cardinality'] === 1) {
           $render['lister']['media'][$media_id]['media_id']['#ajax'] = [
             'callback' => '::ajaxSubmitForm',
             'event' => 'click',
           ];
-        }*/
-
-
+        }
 //        $img = [
 //          '#theme' => 'image_style',
 //          '#style_name' => $settings['image_style'] ?: 'original',
@@ -378,6 +362,22 @@ class ModalBrowserForm extends FormBase {
     $api_url_base = $api_url_parsed['scheme'] . '://' . $api_url_parsed['host'] . ($api_url_parsed['port'] ? ':' . $api_url_parsed['port'] : '');
 
     return $api_url_base;
+  }
+
+  /**
+   * @param $rest_api_url
+   */
+  private function getJsonApiCall($rest_api_url) {
+    $client = new Client();
+    $myConfig = \Drupal::config('filefield_sources_jsonapi');
+    $username = $myConfig->get('username');
+    $password = $myConfig->get('password');
+
+    $response = $client->get($rest_api_url, [
+      'headers' => ['Authorization' => 'Basic ' . base64_encode("$username:$password")],
+    ]);
+
+    return $response;
   }
 
 }
