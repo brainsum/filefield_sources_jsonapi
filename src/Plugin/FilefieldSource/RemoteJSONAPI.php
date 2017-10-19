@@ -309,11 +309,11 @@ class RemoteJSONAPI extends Remote {
       '#default_value' => isset($settings['source_remote_jsonapi']['sort_option_list']) ? $settings['source_remote_jsonapi']['sort_option_list'] : '',
       '#rows' => 5,
     ];
-    $return['source_remote_jsonapi']['name_filter'] = [
+    $return['source_remote_jsonapi']['search_filter'] = [
       '#type' => 'textfield',
-      '#title' => t('Name filter attribute'),
-      '#description' => t('Enter attribute name for name filter. On empty, the name filter will not be active.'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['name_filter']) ? $settings['source_remote_jsonapi']['name_filter'] : '',
+      '#title' => t('Search filter attribute name'),
+      '#description' => t('Enter attribute name for search field. On empty, the search filter will not be active.'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['search_filter']) ? $settings['source_remote_jsonapi']['search_filter'] : '',
       '#rows' => 5,
     ];
     $return['source_remote_jsonapi']['items_per_page'] = array(
@@ -322,14 +322,6 @@ class RemoteJSONAPI extends Remote {
       '#title' => t('Items to display'),
       '#description' => t('Number of items per page for browser.'),
       '#default_value' => isset($settings['source_remote_jsonapi']['items_per_page']) ? $settings['source_remote_jsonapi']['items_per_page'] : self::REMOTE_JSONAPI_LISTER_ITEM_NUM,
-    );
-    $return['source_remote_jsonapi']['image_style'] = array(
-      '#type' => 'select',
-      '#title' => t('Image style'),
-      '#options' => image_style_options(FALSE),
-      '#empty_option' => t('None (original image)'),
-      '#description' => t('Image style to use in browser.'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['image_style']) ? $settings['source_remote_jsonapi']['image_style'] : self::REMOTE_JSONAPI_IMAGE_STYLE,
     );
 
     return $return;
