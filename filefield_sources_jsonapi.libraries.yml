@@ -1,0 +1,5 @@
+filefield-sources-jsonapi:
+  version: VERSION
+  css:
+    component:
+      css/filefield_sources_jsonapi.css: {}
