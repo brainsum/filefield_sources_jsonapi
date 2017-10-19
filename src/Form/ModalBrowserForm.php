@@ -2,15 +2,15 @@
 
 namespace Drupal\filefield_sources_jsonapi\Form;
 
-use Drupal\Core\Form\FormBase;
-use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\CloseModalDialogCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\InvokeCommand;
-use GuzzleHttp\Client;
-use Drupal\Component\Utility\UrlHelper;
+use Drupal\Core\Form\FormBase;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\Entity\FieldStorageConfig;
+use GuzzleHttp\Client;
 
 /**
  * Implements the ModalBrowserForm form controller.
@@ -29,9 +29,17 @@ class ModalBrowserForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $form_mode = NULL, $field_name = NULL) {
     $form['#attached']['library'][] = 'filefield_sources_jsonapi/modal';
+    $form['#prefix'] = '<div id="filefield-sources-jsonapi-browser-form">';
+    $form['#suffix'] = '</div>';
+
+    if ($image_url = $form_state->get('fetched_image_url') && $form_state->get('form_type') === 'insert') {
+      return self::buildInsertForm($form, $form_state);
+    }
+
     $field_widget_settings = \Drupal::entityTypeManager()
       ->getStorage('entity_form_display')
-      ->load($entity_type . '.' . $bundle . '.' . $form_mode)->getComponent($field_name);
+      ->load($entity_type . '.' . $bundle . '.' . $form_mode)
+      ->getComponent($field_name);
     $settings = $field_widget_settings['third_party_settings']['filefield_sources']['filefield_sources']['source_remote_jsonapi'];
     if (!empty($settings['sort_option_list'])) {
       foreach (explode("\n", $settings['sort_option_list']) as $sort_option) {
@@ -39,7 +47,8 @@ class ModalBrowserForm extends FormBase {
         $settings['sort_options'][$key] = $label;
       }
     }
-    $settings['cardinality'] = FieldStorageConfig::loadByName($entity_type, $field_name)->getCardinality();
+    $settings['cardinality'] = FieldStorageConfig::loadByName($entity_type, $field_name)
+      ->getCardinality();
 
     $form_state->set('jsonapi_settings', $settings);
 
@@ -88,26 +97,107 @@ class ModalBrowserForm extends FormBase {
       $form['filefield_filesources_jsonapi_form'] = $this->renderFormElements($response, $form_state);
     }
 
-    $form['#prefix'] = '<div id="filefield-sources-jsonapi-browser-form">';
-    $form['#suffix'] = '</div>';
+    return $form;
+  }
 
-    // If cardinality is 1, don't display submit button - autosubmit on slelect.
-    if ($settings['cardinality'] != 1) {
-      $form['actions'] = [
-        '#type' => 'actions',
-      ];
+  /**
+   * Builds the insert form.
+   *
+   * @param array $form
+   *   An associative array containing the structure of the form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
+   *
+   * @return array
+   *   The render array defining the elements of the form.
+   */
+  public function buildInsertForm(array &$form, FormStateInterface $form_state) {
+    $image_url = $form_state->get('fetched_image_url');
+    $form['title'] = [
+      '#type' => 'item',
+      '#title' => $this->t('Insert selected'),
+    ];
 
-      $form['actions']['submit'] = [
-        '#type' => 'submit',
-        '#value' => $this->t('Submit selected'),
-        '#ajax' => [
-          'callback' => '::ajaxSubmitForm',
-          'event' => 'click',
-        ],
-      ];
-    }
+    $form['wrapper'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['insert-wrapper']],
+    ];
+    $form['wrapper']['image'] = [
+      '#theme' => 'image',
+      '#uri' => $image_url,
+      '#width' => '400',
+    ];
+    $form['wrapper']['detail'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['details-wrapper']],
+    ];
+    $form['wrapper']['detail']['title'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Title'),
+      '#default_value' => '',
+    ];
+    $form['wrapper']['detail']['alt'] = [
+      '#type' => 'textfield',
+      '#title' => $this->t('Alt'),
+      '#default_value' => '',
+    ];
+
+    $form['actions'] = [
+      '#type' => 'actions',
+    ];
+
+    $form['actions']['cancel'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Cancel'),
+      '#submit' => ['::cancelSelectedSubmit'],
+      '#ajax' => [
+        'callback' => '::ajaxInsertCallback',
+        'wrapper' => 'filefield-sources-jsonapi-browser-form',
+      ],
+      '#attributes' => ['class' => ['cancel-button']],
+      '#weight' => 1,
+    ];
+
+    $form['actions']['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Insert'),
+      '#ajax' => [
+        'callback' => '::ajaxSubmitForm',
+        'event' => 'click',
+      ],
+      '#attributes' => ['class' => ['insert-button']],
+      '#weight' => 2,
+    ];
 
     return $form;
+  }
+
+  /**
+   * Provides custom submission handler for change form to insert.
+   *
+   * @param array $form
+   *   An associative array containing the structure of the form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
+   */
+  public function insertSelectedSubmit(array &$form, FormStateInterface $form_state) {
+    $form_state
+      ->set('form_type', 'insert')
+      ->setRebuild(TRUE);
+  }
+
+  /**
+   * Provides custom submission handler for change form to basic.
+   *
+   * @param array $form
+   *   An associative array containing the structure of the form.
+   * @param \Drupal\Core\Form\FormStateInterface $form_state
+   *   The current state of the form.
+   */
+  public function cancelSelectedSubmit(array &$form, FormStateInterface $form_state) {
+    $form_state
+      ->set('form_type', 'form')
+      ->setRebuild(TRUE);
   }
 
   /**
@@ -119,6 +209,7 @@ class ModalBrowserForm extends FormBase {
       $form_state->setErrorByName('tml_media_image_url', $this->t('You can select only one media.'));
       return;
     }*/
+    $image_url = NULL;
     if ($media_id = $selected_media[0]) {
       $settings = $form_state->get('jsonapi_settings');
 
@@ -136,8 +227,8 @@ class ModalBrowserForm extends FormBase {
       if (!$image_url && curl_init($image_url)) {
         $form_state->setErrorByName('tml_media_image_url', $this->t("Can't fetch image from remote server."));
       }
-      $form_state->set('fetched_image_url', $image_url);
     }
+    $form_state->set('fetched_image_url', $image_url);
   }
 
   /**
@@ -177,6 +268,13 @@ class ModalBrowserForm extends FormBase {
    */
   public function ajaxPagerCallback(array &$form, FormStateInterface $form_state) {
     return $form['filefield_filesources_jsonapi_form']['lister'];
+  }
+
+  /**
+   * Implements the insert submit handler for the ajax call.
+   */
+  public function ajaxInsertCallback(array &$form, FormStateInterface $form_state) {
+    return $form;
   }
 
   /**
@@ -222,8 +320,15 @@ class ModalBrowserForm extends FormBase {
     $api_url_base = $this->getApiBaseUrl($settings['api_url']);
 
     $render = [];
+    $render['top'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'id' => 'filefield_filesources_jsonapi_top',
+        'class' => ['browser-top'],
+      ],
+    ];
     if (!empty($settings['sort_options'] || !empty($settings['search_filter']))) {
-      $render['filter'] = [
+      $render['top']['filter'] = [
         '#type' => 'container',
         '#attributes' => [
           'id' => 'filefield_filesources_jsonapi_filter',
@@ -231,7 +336,7 @@ class ModalBrowserForm extends FormBase {
         ],
       ];
       if (!empty($settings['sort_options'])) {
-        $render['filter']['sort'] = [
+        $render['top']['filter']['sort'] = [
           '#title' => $this->t('Sort'),
           '#type' => 'select',
           '#options' => $settings['sort_options'],
@@ -244,14 +349,14 @@ class ModalBrowserForm extends FormBase {
         ];
       }
       if (!empty($settings['search_filter'])) {
-        $render['filter']['name'] = [
+        $render['top']['filter']['name'] = [
           '#type' => 'textfield',
           '#attributes' => [
             'class' => ['file-name'],
             'placeholder' => $this->t('Search'),
           ],
         ];
-        $render['filter']['submit'] = [
+        $render['top']['filter']['submit'] = [
           '#type' => 'submit',
           '#value' => $this->t('Apply'),
           '#limit_validation_errors' => [],
@@ -262,6 +367,26 @@ class ModalBrowserForm extends FormBase {
           ],
         ];
       }
+    }
+
+    // If cardinality is 1, don't display submit button - autosubmit on slelect.
+    if (TRUE || $settings['cardinality'] != 1) {
+      $render['top']['action'] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'id' => 'filefield_filesources_jsonapi_action',
+          'class' => ['browser-action'],
+        ],
+      ];
+      $render['top']['action']['submit'] = [
+        '#type' => 'submit',
+        '#value' => $this->t('Insert selected'),
+        '#submit' => ['::insertSelectedSubmit'],
+        '#ajax' => [
+          'callback' => '::ajaxInsertCallback',
+          'wrapper' => 'filefield-sources-jsonapi-browser-form',
+        ],
+      ];
     }
 
     $render['lister'] = [
@@ -297,12 +422,12 @@ class ModalBrowserForm extends FormBase {
           '#attributes' => ['name' => "media_id_select[$media_id]"],
           '#default_value' => NULL,
         ];
-        if ($settings['cardinality'] === 1) {
+        /*if ($settings['cardinality'] === 1) {
           $render['lister']['media'][$media_id]['media_id']['#ajax'] = [
             'callback' => '::ajaxSubmitForm',
             'event' => 'click',
           ];
-        }
+        }*/
 //        $img = [
 //          '#theme' => 'image_style',
 //          '#style_name' => $settings['image_style'] ?: 'original',
@@ -313,7 +438,7 @@ class ModalBrowserForm extends FormBase {
           '#uri' => $api_url_base . $thumbnail_url,
           '#width' => '100',
         ];
-        $render['lister']['media'][$media_id]['media_id']['#field_suffix'] = drupal_render($img);
+        $render['lister']['media'][$media_id]['media_id']['#field_suffix'] = $data->attributes->name . drupal_render($img);
       }
     }
     if (empty($response->data)) {
@@ -353,11 +478,11 @@ class ModalBrowserForm extends FormBase {
   }
 
   /**
-   *
+   * Helper function to get base url of api uri.
    */
   private function getApiBaseUrl($url) {
     $api_url_parsed = parse_url($url);
-    $api_url_base = $api_url_parsed['scheme'] . '://' . $api_url_parsed['host'] . ($api_url_parsed['port'] ? ':' . $api_url_parsed['port'] : '');
+    $api_url_base = $api_url_parsed['scheme'] . '://' . $api_url_parsed['host'] . (isset($api_url_parsed['port']) ? ':' . $api_url_parsed['port'] : '');
 
     return $api_url_base;
   }
@@ -365,7 +490,7 @@ class ModalBrowserForm extends FormBase {
   /**
    * @param $rest_api_url
    */
-  private function getJsonApiCall($rest_api_url) {
+  private function JsonApiCall($rest_api_url) {
     $client = new Client();
     $myConfig = \Drupal::config('filefield_sources_jsonapi');
     $username = $myConfig->get('username');
