@@ -325,6 +325,11 @@ class ModalBrowserForm extends FormBase {
         $render['lister']['media'][$media_id]['media_id']['#field_suffix'] = drupal_render($img);
       }
     }
+    if (empty($response->data)) {
+      $render['lister']['media']['empty'] = [
+        '#markup' => $this->t('No results.'),
+      ];
+    }
 
     // Add navigation buttons.
     if (isset($response->links->prev)) {
