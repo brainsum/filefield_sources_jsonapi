@@ -490,7 +490,7 @@ class ModalBrowserForm extends FormBase {
   /**
    * @param $rest_api_url
    */
-  private function JsonApiCall($rest_api_url) {
+  private function getJsonApiCall($rest_api_url) {
     $client = new Client();
     $myConfig = \Drupal::config('filefield_sources_jsonapi');
     $username = $myConfig->get('username');
