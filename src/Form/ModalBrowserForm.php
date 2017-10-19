@@ -61,23 +61,13 @@ class ModalBrowserForm extends FormBase {
       list($key, $value) = explode('|', $param);
       $query[$key] = $value;
     }
-    // Filter mappings.
-    $filterMapping = [
-      'name' => 'name',
-      'category' => 'field_category.name',
-    ];
 
     // Add browser form data to JSON API query.
     $user_input = $form_state->getUserInput();
-    if (isset($user_input['name']) && !empty($user_input['name'])) {
-      $query['filter[nameFilter][condition][path]'] = $filterMapping['name'];
+    if (!empty($settings['name_filter']) && isset($user_input['name']) && !empty($user_input['name'])) {
+      $query['filter[nameFilter][condition][path]'] = $settings['name_filter'];
       $query['filter[nameFilter][condition][operator]'] = 'CONTAINS';
       $query['filter[nameFilter][condition][value]'] = $user_input['name'];
-    }
-    if (isset($user_input['category']) && !empty($user_input['category'])) {
-      $query['filter[categoryFilter][condition][path]'] = $filterMapping['category'];
-      $query['filter[categoryFilter][condition][operator]'] = '=';
-      $query['filter[categoryFilter][condition][value]'] = $user_input['category'];
     }
     if (isset($user_input['sort']) && !empty($user_input['sort'])) {
       $query['sort'] = $user_input['sort'];
@@ -232,46 +222,47 @@ class ModalBrowserForm extends FormBase {
     $api_url_base = $this->getApiBaseUrl($settings['api_url']);
 
     $render = [];
-    $render['filter'] = [
-      '#type' => 'container',
-      '#attributes' => ['id' => 'filefield_filesources_jsonapi_filter', 'class' => ['browser-filter']],
-    ];
-    $render['filter']['name'] = [
-      '#title' => $this->t('File name'),
-      '#type' => 'textfield',
-      '#attributes' => ['class' => ['file-name']],
-    ];
-    if (!empty($response->categories)) {
-      $render['filter']['category'] = [
-        '#title' => $this->t('Category'),
-        '#type' => 'select',
-        '#options' => ['' => $this->t('- Any -')] + (array) $response->categories,
-        '#attributes' => ['class' => ['media-category']],
-      ];
-    }
-    if (isset($settings['sort_options'])) {
-      $render['sort'] = [
-        '#title' => $this->t('Sort by'),
-        '#type' => 'select',
-        '#options' => $settings['sort_options'],
-        '#attributes' => ['class' => ['sort-by']],
-        '#submit' => ['::ajaxSubmitFilterForm'],
-        '#ajax' => [
-          'callback' => '::ajaxPagerCallback',
-          'wrapper' => 'filefield_filesources_jsonapi_lister',
+    if (!empty($settings['sort_options'] || !empty($settings['name_filter']))) {
+      $render['filter'] = [
+        '#type' => 'container',
+        '#attributes' => [
+          'id' => 'filefield_filesources_jsonapi_filter',
+          'class' => ['browser-filter', 'inline'],
         ],
       ];
+      if (!empty($settings['sort_options'])) {
+        $render['filter']['sort'] = [
+          '#title' => $this->t('Sort'),
+          '#type' => 'select',
+          '#options' => $settings['sort_options'],
+          '#attributes' => ['class' => ['sort-by', 'inline']],
+          '#submit' => ['::ajaxSubmitFilterForm'],
+          '#ajax' => [
+            'callback' => '::ajaxPagerCallback',
+            'wrapper' => 'filefield_filesources_jsonapi_lister',
+          ],
+        ];
+      }
+      if (!empty($settings['name_filter'])) {
+        $render['filter']['name'] = [
+          '#type' => 'textfield',
+          '#attributes' => [
+            'class' => ['file-name'],
+            'placeholder' => $this->t('Search'),
+          ],
+        ];
+        $render['filter']['submit'] = [
+          '#type' => 'submit',
+          '#value' => $this->t('Apply'),
+          '#limit_validation_errors' => [],
+          '#submit' => ['::ajaxSubmitFilterForm'],
+          '#ajax' => [
+            'callback' => '::ajaxPagerCallback',
+            'wrapper' => 'filefield_filesources_jsonapi_lister',
+          ],
+        ];
+      }
     }
-    $render['filter']['submit'] = [
-      '#type' => 'submit',
-      '#value' => $this->t('Apply'),
-      '#limit_validation_errors' => [],
-      '#submit' => ['::ajaxSubmitFilterForm'],
-      '#ajax' => [
-        'callback' => '::ajaxPagerCallback',
-        'wrapper' => 'filefield_filesources_jsonapi_lister',
-      ],
-    ];
 
     $render['lister'] = [
       '#type' => 'container',

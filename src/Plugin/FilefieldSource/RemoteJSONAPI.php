@@ -309,11 +309,11 @@ class RemoteJSONAPI extends Remote {
       '#default_value' => isset($settings['source_remote_jsonapi']['sort_option_list']) ? $settings['source_remote_jsonapi']['sort_option_list'] : '',
       '#rows' => 5,
     ];
-    $return['source_remote_jsonapi']['filter_mapping'] = [
-      '#type' => 'textarea',
-      '#title' => t('Filter mappings'),
-      '#description' => t('The query parameters. Enter one per line, in the format key|value. The first value will be the default.<br />E.g.<br />name|Name<br />-created|Created'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['filter_mapping']) ? $settings['source_remote_jsonapi']['filter_mapping'] : '',
+    $return['source_remote_jsonapi']['name_filter'] = [
+      '#type' => 'textfield',
+      '#title' => t('Name filter attribute'),
+      '#description' => t('Enter attribute name for name filter. On empty, the name filter will not be active.'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['name_filter']) ? $settings['source_remote_jsonapi']['name_filter'] : '',
       '#rows' => 5,
     ];
     $return['source_remote_jsonapi']['items_per_page'] = array(
