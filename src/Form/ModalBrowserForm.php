@@ -242,7 +242,7 @@ class ModalBrowserForm extends FormBase {
     $settings = $form_state->get('jsonapi_settings');
     $api_url_base = $this->getApiBaseUrl($settings['api_url']);
 
-    $render = '';
+    $render = [];
     $render['filter'] = [
       '#type' => 'container',
       '#attributes' => ['id' => 'tml_media_entity_filter', 'class' => ['media-browser-lister']],
@@ -379,4 +379,5 @@ class ModalBrowserForm extends FormBase {
 
     return $api_url_base;
   }
+
 }
