@@ -64,8 +64,8 @@ class ModalBrowserForm extends FormBase {
 
     // Add browser form data to JSON API query.
     $user_input = $form_state->getUserInput();
-    if (!empty($settings['name_filter']) && isset($user_input['name']) && !empty($user_input['name'])) {
-      $query['filter[nameFilter][condition][path]'] = $settings['name_filter'];
+    if (!empty($settings['search_filter']) && isset($user_input['name']) && !empty($user_input['name'])) {
+      $query['filter[nameFilter][condition][path]'] = $settings['search_filter'];
       $query['filter[nameFilter][condition][operator]'] = 'CONTAINS';
       $query['filter[nameFilter][condition][value]'] = $user_input['name'];
     }
@@ -222,7 +222,7 @@ class ModalBrowserForm extends FormBase {
     $api_url_base = $this->getApiBaseUrl($settings['api_url']);
 
     $render = [];
-    if (!empty($settings['sort_options'] || !empty($settings['name_filter']))) {
+    if (!empty($settings['sort_options'] || !empty($settings['search_filter']))) {
       $render['filter'] = [
         '#type' => 'container',
         '#attributes' => [
@@ -243,7 +243,7 @@ class ModalBrowserForm extends FormBase {
           ],
         ];
       }
-      if (!empty($settings['name_filter'])) {
+      if (!empty($settings['search_filter'])) {
         $render['filter']['name'] = [
           '#type' => 'textfield',
           '#attributes' => [
