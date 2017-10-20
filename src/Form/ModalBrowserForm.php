@@ -227,8 +227,8 @@ class ModalBrowserForm extends FormBase {
       if (!$image_url && curl_init($image_url)) {
         $form_state->setErrorByName('tml_media_image_url', $this->t("Can't fetch image from remote server."));
       }
+      $form_state->set('fetched_image_url', $image_url);
     }
-    $form_state->set('fetched_image_url', $image_url);
   }
 
   /**
@@ -386,6 +386,7 @@ class ModalBrowserForm extends FormBase {
           'callback' => '::ajaxInsertCallback',
           'wrapper' => 'filefield-sources-jsonapi-browser-form',
         ],
+        '#attributes' => ['class' => ['insert-button']],
       ];
     }
 
