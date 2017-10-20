@@ -53,23 +53,15 @@ class ModalBrowserForm extends FormBase {
     $form_state->set('jsonapi_settings', $settings);
 
     $rest_api_url = $settings['api_url'];
+    $query = $this->bulidJsonApiQuery($settings);
 
     $page = $form_state->get('page');
     if ($page === NULL) {
       $form_state->set('page', 0);
       $page = 0;
     }
-
-    $query = [];
-    $query['format'] = 'api_json';
-
     $query['page[limit]'] = $settings['items_per_page'];
     $query['page[offset]'] = $page * $query['page[limit]'];
-
-    foreach (explode("\n", $settings['params']) as $param) {
-      list($key, $value) = explode('|', $param);
-      $query[$key] = $value;
-    }
 
     // Add browser form data to JSON API query.
     $user_input = $form_state->getUserInput();
@@ -379,7 +371,7 @@ class ModalBrowserForm extends FormBase {
         'id' => 'filefield_filesources_jsonapi_action',
         'class' => ['browser-action'],
       ],
-      '#printed' => $settings['cardinality'] === 1 ? TRUE : FALSE,
+//      '#printed' => $settings['cardinality'] === 1 ? TRUE : FALSE,
     ];
     $render['top']['action']['submit'] = [
       '#type' => 'submit',
@@ -418,34 +410,36 @@ class ModalBrowserForm extends FormBase {
           '#type' => 'container',
           '#attributes' => ['class' => ['media-row']],
         ];
-        $render['lister']['media'][$media_id]['media_id'] = [
+        $checkbox = [
           '#type' => 'checkbox',
           '#title' => $this->t('Select this item'),
           '#title_display' => 'invisible',
           '#return_value' => $media_id,
+          '#id' => $media_id,
           '#attributes' => ['name' => "media_id_select[$media_id]"],
           '#default_value' => NULL,
         ];
-        // Auto trigger on cardinality 1.
+        // Auto trigger on cardinality 1 - doesn't work.
         if ($settings['cardinality'] === 1) {
-          $render['lister']['media'][$media_id]['media_id']['#ajax'] = [
+          $checkbox['#ajax'] = [
             'trigger_as' => ['name' => 'insert_selected'],
             'callback' => '::ajaxInsertCallback',
             'wrapper' => 'filefield-sources-jsonapi-browser-form',
             'event' => 'click',
           ];
         }
-//        $img = [
-//          '#theme' => 'image_style',
-//          '#style_name' => $settings['image_style'] ?: 'original',
-//          '#uri' => 'http://tml_tmp.dd:8083' . $thumbnail_url,
-//        ];
         $img = [
           '#theme' => 'image',
           '#uri' => $api_url_base . $thumbnail_url,
           '#width' => '100',
         ];
-        $render['lister']['media'][$media_id]['media_id']['#field_suffix'] = $data->attributes->name . drupal_render($img);
+        $render['lister']['media'][$media_id]['media_id'] = [
+          '#theme' => 'browser_media_box',
+          '#checkbox' => $checkbox,
+          '#checkbox_id' => $media_id,
+          '#img' => $img,
+          '#title' => $data->attributes->name,
+        ];
       }
     }
     if (empty($response->data)) {
@@ -492,6 +486,19 @@ class ModalBrowserForm extends FormBase {
     $api_url_base = $api_url_parsed['scheme'] . '://' . $api_url_parsed['host'] . (isset($api_url_parsed['port']) ? ':' . $api_url_parsed['port'] : '');
 
     return $api_url_base;
+  }
+
+  /**
+   * Build JSON API query based on settings.
+   */
+  private function bulidJsonApiQuery($settings) {
+    $query['format'] = 'api_json';
+
+    foreach (explode("\n", $settings['params']) as $param) {
+      list($key, $value) = explode('|', $param);
+      $query[$key] = $value;
+    }
+    return $query;
   }
 
   /**

@@ -16,3 +16,19 @@ function filefield_sources_jsonapi_help($route_name, RouteMatchInterface $route_
       return check_markup(file_get_contents(dirname(__FILE__) . '/README.md'));
   }
 }
+
+/**
+ * Implements hook_theme().
+ */
+function filefield_sources_jsonapi_theme($existing, $type, $theme, $path) {
+  return [
+    'browser_media_box' => [
+      'variables' => [
+        'checkbox' => [],
+        'checkbox_id' => '',
+        'img' => [],
+        'title' => '',
+      ],
+    ],
+  ];
+}
