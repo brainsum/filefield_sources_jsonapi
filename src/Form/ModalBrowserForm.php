@@ -160,6 +160,7 @@ class ModalBrowserForm extends FormBase {
 
     $form['actions']['submit'] = [
       '#type' => 'submit',
+      '#name' => 'insert',
       '#value' => $this->t('Insert'),
       '#ajax' => [
         'callback' => '::ajaxSubmitForm',
@@ -204,30 +205,32 @@ class ModalBrowserForm extends FormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $selected_media = array_values(array_filter($form_state->getUserInput()['media_id_select']));
-    /*if (count($selected_media) > 1) {
-      $form_state->setErrorByName('tml_media_image_url', $this->t('You can select only one media.'));
-      return;
-    }*/
-    $image_url = NULL;
-    if ($media_id = $selected_media[0]) {
-      $settings = $form_state->get('jsonapi_settings');
+    if ($form_state->getTriggeringElement()['#name'] === 'insert_selected') {
+      $selected_media = array_values(array_filter($form_state->getUserInput()['media_id_select']));
+      /*if (count($selected_media) > 1) {
+        $form_state->setErrorByName('tml_media_image_url', $this->t('You can select only one media.'));
+        return;
+      }*/
+      $image_url = NULL;
+      if ($media_id = $selected_media[0]) {
+        $settings = $form_state->get('jsonapi_settings');
 
-      $api_url_base = $this->getApiBaseUrl($settings['api_url']);
-      $rest_api_url = $api_url_base . '/jsonapi/file/file/' . $media_id;
-      $query['fields[file--file]'] = 'url';
-      $query_str = UrlHelper::buildQuery($query);
-      $rest_api_url = $rest_api_url . '?' . $query_str;
+        $api_url_base = $this->getApiBaseUrl($settings['api_url']);
+        $rest_api_url = $api_url_base . '/jsonapi/file/file/' . $media_id;
+        $query['fields[file--file]'] = 'url';
+        $query_str = UrlHelper::buildQuery($query);
+        $rest_api_url = $rest_api_url . '?' . $query_str;
 
-      $response = $this->getJsonApiCall($rest_api_url);
-      if (200 === $response->getStatusCode()) {
-        $response = json_decode($response->getBody());
-        $image_url = $api_url_base . $response->data->attributes->url;
+        $response = $this->getJsonApiCall($rest_api_url);
+        if (200 === $response->getStatusCode()) {
+          $response = json_decode($response->getBody());
+          $image_url = $api_url_base . $response->data->attributes->url;
+        }
+        if (!$image_url && curl_init($image_url)) {
+          $form_state->setErrorByName('tml_media_image_url', $this->t("Can't fetch image from remote server."));
+        }
+        $form_state->set('fetched_image_url', $image_url);
       }
-      if (!$image_url && curl_init($image_url)) {
-        $form_state->setErrorByName('tml_media_image_url', $this->t("Can't fetch image from remote server."));
-      }
-      $form_state->set('fetched_image_url', $image_url);
     }
   }
 
@@ -369,26 +372,26 @@ class ModalBrowserForm extends FormBase {
       }
     }
 
-    // If cardinality is 1, don't display submit button - autosubmit on slelect.
-    if (TRUE || $settings['cardinality'] != 1) {
-      $render['top']['action'] = [
-        '#type' => 'container',
-        '#attributes' => [
-          'id' => 'filefield_filesources_jsonapi_action',
-          'class' => ['browser-action'],
-        ],
-      ];
-      $render['top']['action']['submit'] = [
-        '#type' => 'submit',
-        '#value' => $this->t('Insert selected'),
-        '#submit' => ['::insertSelectedSubmit'],
-        '#ajax' => [
-          'callback' => '::ajaxInsertCallback',
-          'wrapper' => 'filefield-sources-jsonapi-browser-form',
-        ],
-        '#attributes' => ['class' => ['insert-button']],
-      ];
-    }
+    // If cardinality is 1, don't render submit button - autosubmit on slelect.
+    $render['top']['action'] = [
+      '#type' => 'container',
+      '#attributes' => [
+        'id' => 'filefield_filesources_jsonapi_action',
+        'class' => ['browser-action'],
+      ],
+      '#printed' => $settings['cardinality'] === 1 ? TRUE : FALSE,
+    ];
+    $render['top']['action']['submit'] = [
+      '#type' => 'submit',
+      '#name' => 'insert_selected',
+      '#value' => $this->t('Insert selected'),
+      '#submit' => ['::insertSelectedSubmit'],
+      '#ajax' => [
+        'callback' => '::ajaxInsertCallback',
+        'wrapper' => 'filefield-sources-jsonapi-browser-form',
+      ],
+      '#attributes' => ['class' => ['insert-button']],
+    ];
 
     $render['lister'] = [
       '#type' => 'container',
@@ -423,12 +426,15 @@ class ModalBrowserForm extends FormBase {
           '#attributes' => ['name' => "media_id_select[$media_id]"],
           '#default_value' => NULL,
         ];
-        /*if ($settings['cardinality'] === 1) {
+        // Auto trigger on cardinality 1.
+        if ($settings['cardinality'] === 1) {
           $render['lister']['media'][$media_id]['media_id']['#ajax'] = [
-            'callback' => '::ajaxSubmitForm',
+            'trigger_as' => ['name' => 'insert_selected'],
+            'callback' => '::ajaxInsertCallback',
+            'wrapper' => 'filefield-sources-jsonapi-browser-form',
             'event' => 'click',
           ];
-        }*/
+        }
 //        $img = [
 //          '#theme' => 'image_style',
 //          '#style_name' => $settings['image_style'] ?: 'original',
