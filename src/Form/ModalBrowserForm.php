@@ -32,7 +32,7 @@ class ModalBrowserForm extends FormBase {
     $form['#prefix'] = '<div id="filefield-sources-jsonapi-browser-form">';
     $form['#suffix'] = '</div>';
 
-    if ($image_url = $form_state->get('fetched_image_url') && $form_state->get('form_type') === 'insert') {
+    if ($image = $form_state->get('fetched_image') && $form_state->get('form_type') === 'insert') {
       return self::buildInsertForm($form, $form_state);
     }
 
@@ -104,7 +104,7 @@ class ModalBrowserForm extends FormBase {
    *   The render array defining the elements of the form.
    */
   public function buildInsertForm(array &$form, FormStateInterface $form_state) {
-    $image_url = $form_state->get('fetched_image_url');
+    $image = $form_state->get('fetched_image');
     $form['title'] = [
       '#type' => 'item',
       '#title' => $this->t('Insert selected'),
@@ -116,7 +116,7 @@ class ModalBrowserForm extends FormBase {
     ];
     $form['wrapper']['image'] = [
       '#theme' => 'image',
-      '#uri' => $image_url,
+      '#uri' => $image['url'],
       '#width' => '400',
     ];
     $form['wrapper']['detail'] = [
@@ -126,12 +126,12 @@ class ModalBrowserForm extends FormBase {
     $form['wrapper']['detail']['title'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Title'),
-      '#default_value' => '',
+      '#default_value' => $image['title'],
     ];
     $form['wrapper']['detail']['alt'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Alt'),
-      '#default_value' => '',
+      '#default_value' => $image['alt'],
     ];
 
     $form['actions'] = [
@@ -200,28 +200,40 @@ class ModalBrowserForm extends FormBase {
     if ($form_state->getTriggeringElement()['#name'] === 'insert_selected') {
       $selected_media = array_values(array_filter($form_state->getUserInput()['media_id_select']));
       /*if (count($selected_media) > 1) {
-        $form_state->setErrorByName('tml_media_image_url', $this->t('You can select only one media.'));
+        $form_state->setErrorByName('', $this->t('You can select only one media.'));
         return;
       }*/
       $image_url = NULL;
       if ($media_id = $selected_media[0]) {
         $settings = $form_state->get('jsonapi_settings');
 
-        $api_url_base = $this->getApiBaseUrl($settings['api_url']);
-        $rest_api_url = $api_url_base . '/jsonapi/file/file/' . $media_id;
-        $query['fields[file--file]'] = 'url';
+        $rest_api_url = $settings['api_url'] . '/' . $media_id;
+        $query = $this->bulidJsonApiQuery($settings);
         $query_str = UrlHelper::buildQuery($query);
         $rest_api_url = $rest_api_url . '?' . $query_str;
 
         $response = $this->getJsonApiCall($rest_api_url);
         if (200 === $response->getStatusCode()) {
           $response = json_decode($response->getBody());
-          $image_url = $api_url_base . $response->data->attributes->url;
+          $api_url_base = $this->getApiBaseUrl($settings['api_url']);
+          $image['url'] = $this->getJsonApiDatabyPath($response, $settings['url_attribute_name']);
+          $image['url'] = $api_url_base . $image['url'];
+          if (!empty($settings['alt_attribute_name'])) {
+            $image['alt'] = $this->getJsonApiDatabyPath($response, $settings['alt_attribute_name']);
+          }
+          if (!empty($settings['title_attribute_name'])) {
+            $image['title'] = $this->getJsonApiDatabyPath($response, $settings['title_attribute_name']);
+          }
         }
-        if (!$image_url && curl_init($image_url)) {
-          $form_state->setErrorByName('tml_media_image_url', $this->t("Can't fetch image from remote server."));
+
+        if (!isset($image['url']) || !curl_init($image['url'])) {
+          $form_state->setErrorByName('', $this->t("Can't fetch image from remote server."));
+          $this->getLogger('filefield_sources_jsonapi')->warning("Can't fetch image (@url) from remote server.", ['@url' => $image['url']]);
         }
-        $form_state->set('fetched_image_url', $image_url);
+        $form_state->set('fetched_image', $image);
+      }
+      else {
+        $form_state->setErrorByName('', $this->t("No image was selected."));
       }
     }
   }
@@ -299,8 +311,8 @@ class ModalBrowserForm extends FormBase {
       $response->addCommand(new HtmlCommand('#filefield-sources-jsonapi-browser-form', $form));
     }
     else {
-      $image_url = $form_state->get('fetched_image_url');
-      $response->addCommand(new InvokeCommand('.filefield-source-remote_jsonapi input[type=text]', 'val', [$image_url]));
+      $image = $form_state->get('fetched_image');
+      $response->addCommand(new InvokeCommand('.filefield-source-remote_jsonapi input[type=text]', 'val', [$image['url']]));
       $response->addCommand(new InvokeCommand('.filefield-source-remote_jsonapi input[type=submit]', 'mousedown'));
       $response->addCommand(new CloseModalDialogCommand());
     }
@@ -397,14 +409,8 @@ class ModalBrowserForm extends FormBase {
       '#attributes' => ['class' => ['media-lister']],
     ];
     foreach ($response->data as $data) {
-      $media_id = $data->relationships->field_image->data->id;
-      $thumbnail_url = NULL;
-      foreach ($response->included as $included) {
-        if ($data->relationships->thumbnail->data->type === $included->type && $data->relationships->thumbnail->data->id === $included->id) {
-          $thumbnail_url = $included->attributes->url;
-          break;
-        }
-      }
+      $media_id = $data->id;
+      $thumbnail_url = $this->getJsonApiDatabyPath($response, $settings['url_attribute_name'], $data);
       if ($media_id && $thumbnail_url) {
         $render['lister']['media'][$media_id] = [
           '#type' => 'container',
@@ -515,6 +521,53 @@ class ModalBrowserForm extends FormBase {
     ]);
 
     return $response;
+  }
+
+  /**
+   * Get data from JSON API response by path.
+   *
+   * @param object $response
+   *   Full JSON API response with data, included.
+   * @param string $pathString
+   *   Attribute's path string, e.g.:
+   *   data->attributes->title
+   *   data->attributes->field_image->attributes->data->url.
+   * @param object $data
+   *   Actual response data - optional.
+   *
+   * @return mixed
+   *   Data from JSON API response.
+   */
+  public function getJsonApiDatabyPath($response, $pathString, $data = NULL) {
+    if (!empty($data)) {
+      $attribute_data = $data;
+      $pathString = preg_replace('/^data->/', '', $pathString);
+    }
+    else {
+      $attribute_data = $response;
+    }
+    $value = NULL;
+    list($data_path, $included_path) = explode('->included->', $pathString);
+    foreach (explode('->', $data_path) as $property) {
+      $attribute_data = $attribute_data->{$property};
+    }
+    if (!empty($included_path)) {
+      foreach ($response->included as $included) {
+        $included_data = $included;
+        foreach (explode('->', $included_path) as $property) {
+          $included_data = $included_data->{$property};
+        }
+        if ($attribute_data->data->type === $included->type && $attribute_data->data->id === $included->id) {
+          $value = $included_data;
+          break;
+        }
+      }
+    }
+    else {
+      $value = $attribute_data;
+    }
+
+    return $value;
   }
 
 }

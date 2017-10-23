@@ -277,7 +277,7 @@ class RemoteJSONAPI extends Remote {
     ));
 
     $return['source_remote_jsonapi'] = array(
-      '#title' => t('JSONA Api settings'),
+      '#title' => t('JSON Api settings'),
       '#type' => 'details',
       '#description' => t('Enable JSON API browser'),
       '#weight' => 10,
@@ -302,6 +302,24 @@ class RemoteJSONAPI extends Remote {
       '#default_value' => isset($settings['source_remote_jsonapi']['params']) ? $settings['source_remote_jsonapi']['params'] : '',
       '#rows' => 10,
     ];
+    $return['source_remote_jsonapi']['url_attribute_name'] = [
+      '#type' => 'textfield',
+      '#title' => t('URL attribute name'),
+      '#description' => t('Enter attribute name for the file URL. E.g. data->field_image->included->attributes->url'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['url_attribute_name']) ? $settings['source_remote_jsonapi']['url_attribute_name'] : NULL,
+    ];
+    $return['source_remote_jsonapi']['alt_attribute_name'] = [
+      '#type' => 'textfield',
+      '#title' => t('Alt attribute name'),
+      '#description' => t('Enter attribute name for the alt. E.g. data->field_image->data->meta->alt'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['alt_attribute_name']) ? $settings['source_remote_jsonapi']['alt_attribute_name'] : NULL,
+    ];
+    $return['source_remote_jsonapi']['title_attribute_name'] = [
+      '#type' => 'textfield',
+      '#title' => t('Title attribute name'),
+      '#description' => t('Enter attribute name for the title. E.g. data->field_image->data->meta->title'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['title_attribute_name']) ? $settings['source_remote_jsonapi']['title_attribute_name'] : NULL,
+    ];
     $return['source_remote_jsonapi']['sort_option_list'] = [
       '#type' => 'textarea',
       '#title' => t('Sorting option list'),
@@ -314,7 +332,6 @@ class RemoteJSONAPI extends Remote {
       '#title' => t('Search filter attribute name'),
       '#description' => t('Enter attribute name for search field. On empty, the search filter will not be active.'),
       '#default_value' => isset($settings['source_remote_jsonapi']['search_filter']) ? $settings['source_remote_jsonapi']['search_filter'] : '',
-      '#rows' => 5,
     ];
     $return['source_remote_jsonapi']['items_per_page'] = array(
       '#type' => 'number',
