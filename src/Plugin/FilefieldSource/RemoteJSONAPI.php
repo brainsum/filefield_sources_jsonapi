@@ -304,19 +304,19 @@ class RemoteJSONAPI extends Remote {
     ];
     $return['source_remote_jsonapi']['url_attribute_path'] = [
       '#type' => 'textfield',
-      '#title' => t('URL attribute name'),
+      '#title' => t('URL attribute path'),
       '#description' => t('Enter attribute name for the file URL. E.g. data->field_image->included->attributes->url'),
       '#default_value' => isset($settings['source_remote_jsonapi']['url_attribute_path']) ? $settings['source_remote_jsonapi']['url_attribute_path'] : NULL,
     ];
     $return['source_remote_jsonapi']['alt_attribute_path'] = [
       '#type' => 'textfield',
-      '#title' => t('Alt attribute name'),
+      '#title' => t('Alt attribute path'),
       '#description' => t('Enter attribute name for the alt. E.g. data->field_image->data->meta->alt'),
       '#default_value' => isset($settings['source_remote_jsonapi']['alt_attribute_path']) ? $settings['source_remote_jsonapi']['alt_attribute_path'] : NULL,
     ];
     $return['source_remote_jsonapi']['title_attribute_path'] = [
       '#type' => 'textfield',
-      '#title' => t('Title attribute name'),
+      '#title' => t('Title attribute path'),
       '#description' => t('Enter attribute name for the title. E.g. data->field_image->data->meta->title'),
       '#default_value' => isset($settings['source_remote_jsonapi']['title_attribute_path']) ? $settings['source_remote_jsonapi']['title_attribute_path'] : NULL,
     ];
