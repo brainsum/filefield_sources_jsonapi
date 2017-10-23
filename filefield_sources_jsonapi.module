@@ -49,8 +49,6 @@ function filefield_sources_jsonapi_element_info_alter(&$type) {
  * Add widget.js if source_remote_jsonapi is enabled.
  */
 function filefield_sources_jsonapi_field_process(&$element, FormStateInterface $form_state, &$complete_form) {
-  static $js_added;
-
   // Check if we are processing file field sources.
   if (!isset($element['#filefield_sources_settings']['source_remote_jsonapi'])) {
     return $element;
