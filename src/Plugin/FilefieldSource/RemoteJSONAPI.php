@@ -302,23 +302,23 @@ class RemoteJSONAPI extends Remote {
       '#default_value' => isset($settings['source_remote_jsonapi']['params']) ? $settings['source_remote_jsonapi']['params'] : '',
       '#rows' => 10,
     ];
-    $return['source_remote_jsonapi']['url_attribute_name'] = [
+    $return['source_remote_jsonapi']['url_attribute_path'] = [
       '#type' => 'textfield',
       '#title' => t('URL attribute name'),
       '#description' => t('Enter attribute name for the file URL. E.g. data->field_image->included->attributes->url'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['url_attribute_name']) ? $settings['source_remote_jsonapi']['url_attribute_name'] : NULL,
+      '#default_value' => isset($settings['source_remote_jsonapi']['url_attribute_path']) ? $settings['source_remote_jsonapi']['url_attribute_path'] : NULL,
     ];
-    $return['source_remote_jsonapi']['alt_attribute_name'] = [
+    $return['source_remote_jsonapi']['alt_attribute_path'] = [
       '#type' => 'textfield',
       '#title' => t('Alt attribute name'),
       '#description' => t('Enter attribute name for the alt. E.g. data->field_image->data->meta->alt'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['alt_attribute_name']) ? $settings['source_remote_jsonapi']['alt_attribute_name'] : NULL,
+      '#default_value' => isset($settings['source_remote_jsonapi']['alt_attribute_path']) ? $settings['source_remote_jsonapi']['alt_attribute_path'] : NULL,
     ];
-    $return['source_remote_jsonapi']['title_attribute_name'] = [
+    $return['source_remote_jsonapi']['title_attribute_path'] = [
       '#type' => 'textfield',
       '#title' => t('Title attribute name'),
       '#description' => t('Enter attribute name for the title. E.g. data->field_image->data->meta->title'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['title_attribute_name']) ? $settings['source_remote_jsonapi']['title_attribute_name'] : NULL,
+      '#default_value' => isset($settings['source_remote_jsonapi']['title_attribute_path']) ? $settings['source_remote_jsonapi']['title_attribute_path'] : NULL,
     ];
     $return['source_remote_jsonapi']['sort_option_list'] = [
       '#type' => 'textarea',

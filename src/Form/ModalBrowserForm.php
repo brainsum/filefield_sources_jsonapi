@@ -216,13 +216,13 @@ class ModalBrowserForm extends FormBase {
         if (200 === $response->getStatusCode()) {
           $response = json_decode($response->getBody());
           $api_url_base = $this->getApiBaseUrl($settings['api_url']);
-          $image['url'] = $this->getJsonApiDatabyPath($response, $settings['url_attribute_name']);
+          $image['url'] = $this->getJsonApiDatabyPath($response, $settings['url_attribute_path']);
           $image['url'] = $api_url_base . $image['url'];
-          if (!empty($settings['alt_attribute_name'])) {
-            $image['alt'] = $this->getJsonApiDatabyPath($response, $settings['alt_attribute_name']);
+          if (!empty($settings['alt_attribute_path'])) {
+            $image['alt'] = $this->getJsonApiDatabyPath($response, $settings['alt_attribute_path']);
           }
-          if (!empty($settings['title_attribute_name'])) {
-            $image['title'] = $this->getJsonApiDatabyPath($response, $settings['title_attribute_name']);
+          if (!empty($settings['title_attribute_path'])) {
+            $image['title'] = $this->getJsonApiDatabyPath($response, $settings['title_attribute_path']);
           }
         }
 
@@ -410,7 +410,7 @@ class ModalBrowserForm extends FormBase {
     ];
     foreach ($response->data as $data) {
       $media_id = $data->id;
-      $thumbnail_url = $this->getJsonApiDatabyPath($response, $settings['url_attribute_name'], $data);
+      $thumbnail_url = $this->getJsonApiDatabyPath($response, $settings['url_attribute_path'], $data);
       if ($media_id && $thumbnail_url) {
         $render['lister']['media'][$media_id] = [
           '#type' => 'container',
