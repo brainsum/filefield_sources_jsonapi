@@ -6,6 +6,7 @@
  */
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Implements hook_help().
@@ -31,4 +32,30 @@ function filefield_sources_jsonapi_theme($existing, $type, $theme, $path) {
       ],
     ],
   ];
+}
+
+/**
+ * Implements hook_element_info_alter().
+ */
+function filefield_sources_jsonapi_element_info_alter(&$type) {
+  if (isset($type['managed_file'])) {
+    $type['managed_file']['#process'][] = 'filefield_sources_jsonapi_field_process';
+  }
+}
+
+/**
+ * A #process callback to extend the filefield_widget element type.
+ *
+ * Add widget.js if source_remote_jsonapi is enabled.
+ */
+function filefield_sources_jsonapi_field_process(&$element, FormStateInterface $form_state, &$complete_form) {
+  static $js_added;
+
+  // Check if we are processing file field sources.
+  if (!isset($element['#filefield_sources_settings']['source_remote_jsonapi'])) {
+    return $element;
+  }
+  $element['#attached']['library'][] = 'filefield_sources_jsonapi/widget';
+
+  return $element;
 }
