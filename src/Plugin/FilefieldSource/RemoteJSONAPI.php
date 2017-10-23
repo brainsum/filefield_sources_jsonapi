@@ -201,6 +201,7 @@ class RemoteJSONAPI extends Remote {
       '#type' => 'textfield',
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
       '#maxlength' => NULL,
+      '#attributes' => ['class' => ['visually-hidden']],
     );
 
     $class = '\Drupal\file\Element\ManagedFile';
@@ -228,6 +229,7 @@ class RemoteJSONAPI extends Remote {
       '#submit' => ['filefield_sources_field_submit'],
       '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
+      '#attributes' => ['class' => ['visually-hidden']],
     ];
 
     return $element;
@@ -262,7 +264,7 @@ class RemoteJSONAPI extends Remote {
     $rendered_button = drupal_render($button);
 
     // @todo - hide element with css.
-    return '<div class="filefield-source filefield-source-remote_jsonapi clear-block"><div style="display: none;">' . drupal_render($element['url']) . '</div>' . $rendered_button . '</div>';
+    return '<div class="filefield-source filefield-source-remote_jsonapi clear-block">' . drupal_render($element['url']) . $rendered_button . '</div>';
   }
 
   /**

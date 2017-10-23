@@ -4,7 +4,6 @@
   Drupal.behaviors.mediaBox = {
     attach: function (context, settings) {
       var $insert_button = $("#filefield_filesources_jsonapi_action input[name='insert_selected']");
-      $insert_button.hide();
 
       $('.form-type-checkbox + label').each(function(){
         $(this).find('img').wrapAll('<div class="form-image" />').wrapAll('<div class="image" />');

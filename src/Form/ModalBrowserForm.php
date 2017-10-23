@@ -394,7 +394,7 @@ class ModalBrowserForm extends FormBase {
         'callback' => '::ajaxInsertCallback',
         'wrapper' => 'filefield-sources-jsonapi-browser-form',
       ],
-      '#attributes' => ['class' => ['insert-button']],
+      '#attributes' => ['class' => ['insert-button', 'visually-hidden']],
     ];
 
     $render['lister'] = [
