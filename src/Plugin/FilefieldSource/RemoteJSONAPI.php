@@ -340,7 +340,7 @@ class RemoteJSONAPI extends Remote {
       '#type' => 'textarea',
       '#title' => t('Sorting option list'),
       '#description' => t('The possible values for sorting. Enter one value per line, in the format key|label. The first value will be the default. Selector will be displeyed only if you enter more than one.<br />E.g.<br />-created|Newest first<br />name|Name'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['sort_option_list']) ? $settings['source_remote_jsonapi']['sort_option_list'] : REMOTE_JSONAPI_LISTER_SORT,
+      '#default_value' => isset($settings['source_remote_jsonapi']['sort_option_list']) ? $settings['source_remote_jsonapi']['sort_option_list'] : self::REMOTE_JSONAPI_LISTER_SORT,
       '#rows' => 5,
     ];
     $return['source_remote_jsonapi']['search_filter'] = [
