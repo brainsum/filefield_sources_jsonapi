@@ -374,6 +374,7 @@ class ModalBrowserForm extends FormBase {
             'callback' => '::ajaxPagerCallback',
             'wrapper' => 'filefield_filesources_jsonapi_lister',
           ],
+          '#attributes' => ['class' => ['visually-hidden']],
         ];
       }
     }
@@ -439,7 +440,7 @@ class ModalBrowserForm extends FormBase {
         $img = [
           '#theme' => 'image',
           '#uri' => $api_url_base . $thumbnail_url,
-          '#width' => '100',
+          '#width' => '120',
         ];
         $render['lister']['media'][$media_id]['media_id'] = [
           '#theme' => 'browser_media_box',
