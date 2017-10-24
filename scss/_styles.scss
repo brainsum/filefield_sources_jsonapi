@@ -1,3 +1,7 @@
+img {
+  max-width: 100%;
+  height: auto;
+}
 
 // Drupal modal
 #drupal-modal {
@@ -215,3 +219,19 @@
   }
 }
 
+.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
+  text-align: center;
+  .cancel-button {
+    background: none;
+    border: none;
+    border-radius: 0;
+    border-bottom: 1px solid #a6a6a6;
+  }
+  .insert-button {
+    border-color: #1e5c90;
+    background: #0071b8 linear-gradient(to bottom, #007bc6, #0071b8);
+    color: #fff;
+    text-shadow: 0 1px hsla(0, 0%, 0%, 0.5);
+    font-weight: 700;
+  }
+}
