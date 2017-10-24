@@ -49,6 +49,8 @@ class ModalBrowserForm extends FormBase {
     }
     $settings['cardinality'] = FieldStorageConfig::loadByName($entity_type, $field_name)
       ->getCardinality();
+    $field_settings = \Drupal::getContainer()->get('entity_field.manager')->getFieldDefinitions($entity_type, $bundle)[$field_name]->getSettings();
+    $settings['field_settings'] = $field_settings;
 
     $form_state->set('jsonapi_settings', $settings);
 
@@ -105,6 +107,7 @@ class ModalBrowserForm extends FormBase {
    */
   public function buildInsertForm(array &$form, FormStateInterface $form_state) {
     $image = $form_state->get('fetched_image');
+    $settings = $form_state->get('jsonapi_settings');
     $form['title'] = [
       '#type' => 'item',
       '#title' => $this->t('Insert selected'),
@@ -123,16 +126,22 @@ class ModalBrowserForm extends FormBase {
       '#type' => 'container',
       '#attributes' => ['class' => ['details-wrapper']],
     ];
-    $form['wrapper']['detail']['title'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Title'),
-      '#default_value' => $image['title'],
-    ];
-    $form['wrapper']['detail']['alt'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Alt'),
-      '#default_value' => $image['alt'],
-    ];
+    if ($settings['field_settings']['title_field']) {
+      $form['wrapper']['detail']['title'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Title'),
+        '#default_value' => $image['title'],
+        '#required' => $settings['field_settings']['title_field_required'] ? TRUE : FALSE,
+      ];
+    }
+    if ($settings['field_settings']['alt_field']) {
+      $form['wrapper']['detail']['alt'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Alt'),
+        '#default_value' => $image['alt'],
+        '#required' => $settings['field_settings']['alt_field_required'] ? TRUE : FALSE,
+      ];
+    }
 
     $form['actions'] = [
       '#type' => 'actions',
