@@ -54,6 +54,14 @@ function filefield_sources_jsonapi_field_process(&$element, FormStateInterface $
     return $element;
   }
   $element['#attached']['library'][] = 'filefield_sources_jsonapi/widget';
+  if (!empty($element['#value']['fids'])) {
+    if (isset($element['#value']['filefield_remote_jsonapi']['alt'])) {
+      $element['#value']['alt'] = $element['#value']['filefield_remote_jsonapi']['alt'];
+    }
+    if (isset($element['#value']['filefield_remote_jsonapi']['title'])) {
+      $element['#value']['title'] = $element['#value']['filefield_remote_jsonapi']['title'];
+    }
+  }
 
   return $element;
 }

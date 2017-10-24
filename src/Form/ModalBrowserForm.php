@@ -312,7 +312,9 @@ class ModalBrowserForm extends FormBase {
     }
     else {
       $image = $form_state->get('fetched_image');
-      $response->addCommand(new InvokeCommand('.filefield-source-remote_jsonapi input[type=text]', 'val', [$image['url']]));
+      $response->addCommand(new InvokeCommand(".filefield-source-remote_jsonapi input[name$='[filefield_remote_jsonapi][url]']", 'val', [$image['url']]));
+      $response->addCommand(new InvokeCommand(".filefield-source-remote_jsonapi input[name$='[filefield_remote_jsonapi][alt]']", 'val', [$form_state->getUserInput()['alt']]));
+      $response->addCommand(new InvokeCommand(".filefield-source-remote_jsonapi input[name$='[filefield_remote_jsonapi][title]']", 'val', [$form_state->getUserInput()['title']]));
       $response->addCommand(new InvokeCommand('.filefield-source-remote_jsonapi input[type=submit]', 'mousedown'));
       $response->addCommand(new CloseModalDialogCommand());
     }

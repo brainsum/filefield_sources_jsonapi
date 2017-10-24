@@ -203,6 +203,14 @@ class RemoteJSONAPI extends Remote {
       '#maxlength' => NULL,
       '#attributes' => ['class' => ['visually-hidden']],
     );
+    $element['filefield_remote_jsonapi']['alt'] = array(
+      '#type' => 'hidden',
+      '#value' => '',
+    );
+    $element['filefield_remote_jsonapi']['title'] = array(
+      '#type' => 'hidden',
+      '#value' => '',
+    );
 
     $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
@@ -264,7 +272,7 @@ class RemoteJSONAPI extends Remote {
     $rendered_button = drupal_render($button);
 
     // @todo - hide element with css.
-    return '<div class="filefield-source filefield-source-remote_jsonapi clear-block">' . drupal_render($element['url']) . $rendered_button . '</div>';
+    return '<div class="filefield-source filefield-source-remote_jsonapi clear-block">' . drupal_render($element['url']) . drupal_render($element['alt']) . drupal_render($element['title']) . $rendered_button . '</div>';
   }
 
   /**
