@@ -86,6 +86,20 @@ img {
     padding: 1em 0;
   }
 }
+.browser-lister {
+  .button {
+    position: absolute;
+    bottom: 30px;
+    &[data-drupal-selector="edit-next"] {
+      right: 30px;
+      margin-right: 0;
+    }
+    &[data-drupal-selector="edit-prev"] {
+      left: 30px;
+      margin-left: 0;
+    }
+  }
+}
 .media-lister {
   background: white;
   display: grid;
