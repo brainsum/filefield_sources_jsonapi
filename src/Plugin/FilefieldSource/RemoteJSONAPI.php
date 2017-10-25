@@ -262,7 +262,7 @@ class RemoteJSONAPI extends Remote {
           'attributes' => [
             'class' => ['use-ajax'],
             'data-dialog-type' => 'modal',
-            'data-dialog-options' => Json::encode(['width' => 1000]),
+            'data-dialog-options' => Json::encode(['width' => 1000, 'height' => 750]),
           ],
         ]
       ),
@@ -315,19 +315,19 @@ class RemoteJSONAPI extends Remote {
     $return['source_remote_jsonapi']['url_attribute_path'] = [
       '#type' => 'textfield',
       '#title' => t('URL attribute path'),
-      '#description' => t('Enter attribute name for the file URL. E.g. data->field_image->included->attributes->url'),
+      '#description' => t('Enter attribute name for the file URL. E.g. data->relationships->field_image->included->attributes->url'),
       '#default_value' => isset($settings['source_remote_jsonapi']['url_attribute_path']) ? $settings['source_remote_jsonapi']['url_attribute_path'] : NULL,
     ];
     $return['source_remote_jsonapi']['thumbnail_url_attribute_path'] = [
       '#type' => 'textfield',
       '#title' => t('Thumbnail URL attribute path'),
-      '#description' => t('Enter attribute name for the thumbnail file URL. E.g. data->field_image->included->attributes->thumbnail_url'),
+      '#description' => t('Enter attribute name for the thumbnail file URL. E.g. data->relationships->field_image->included->attributes->thumbnail_url'),
       '#default_value' => isset($settings['source_remote_jsonapi']['thumbnail_url_attribute_path']) ? $settings['source_remote_jsonapi']['thumbnail_url_attribute_path'] : NULL,
     ];
     $return['source_remote_jsonapi']['alt_attribute_path'] = [
       '#type' => 'textfield',
       '#title' => t('Alt attribute path'),
-      '#description' => t('Enter attribute name for the alt. E.g. data->field_image->data->meta->alt'),
+      '#description' => t('Enter attribute name for the alt. E.g. data->relationships->field_image->data->meta->alt'),
       '#default_value' => isset($settings['source_remote_jsonapi']['alt_attribute_path']) ? $settings['source_remote_jsonapi']['alt_attribute_path'] : NULL,
     ];
     $return['source_remote_jsonapi']['title_attribute_path'] = [
@@ -346,7 +346,7 @@ class RemoteJSONAPI extends Remote {
     $return['source_remote_jsonapi']['search_filter'] = [
       '#type' => 'textfield',
       '#title' => t('Search filter attribute name'),
-      '#description' => t('Enter attribute name for search field. On empty, the search filter will not be active.'),
+      '#description' => t('Enter attribute name for search field. On empty, the search filter will not be active. Multiple fields can be added separated with comma. E.g.: filename,field_category'),
       '#default_value' => isset($settings['source_remote_jsonapi']['search_filter']) ? $settings['source_remote_jsonapi']['search_filter'] : '',
     ];
     $return['source_remote_jsonapi']['items_per_page'] = array(

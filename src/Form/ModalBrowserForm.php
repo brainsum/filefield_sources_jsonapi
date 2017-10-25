@@ -68,9 +68,21 @@ class ModalBrowserForm extends FormBase {
     // Add browser form data to JSON API query.
     $user_input = $form_state->getUserInput();
     if (!empty($settings['search_filter']) && isset($user_input['name']) && !empty($user_input['name'])) {
-      $query['filter[nameFilter][condition][path]'] = $settings['search_filter'];
-      $query['filter[nameFilter][condition][operator]'] = 'CONTAINS';
-      $query['filter[nameFilter][condition][value]'] = $user_input['name'];
+      if ($field_paths = explode(',', $settings['search_filter'])) {
+        $query['filter[or-group][group][conjunction]'] = 'OR';
+        foreach ($field_paths as $delta => $field_path) {
+          $filterName = 'filter-' . $delta;
+          $query['filter[' . $filterName . '][condition][path]'] = $field_path;
+          $query['filter[' . $filterName . '][condition][operator]'] = 'CONTAINS';
+          $query['filter[' . $filterName . '][condition][value]'] = $user_input['name'];
+          $query['filter[' . $filterName . '][condition][memberOf]'] = 'or-group';
+        }
+      }
+      else {
+        $query['filter[nameFilter][condition][path]'] = $settings['search_filter'];
+        $query['filter[nameFilter][condition][operator]'] = 'CONTAINS';
+        $query['filter[nameFilter][condition][value]'] = $user_input['name'];
+      }
     }
     if (isset($user_input['sort']) && !empty($user_input['sort'])) {
       $query['sort'] = $user_input['sort'];
