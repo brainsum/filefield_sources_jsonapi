@@ -220,10 +220,7 @@ class ModalBrowserForm extends FormBase {
   public function validateForm(array &$form, FormStateInterface $form_state) {
     if ($form_state->getTriggeringElement()['#name'] === 'insert_selected') {
       $selected_media = array_values(array_filter($form_state->getUserInput()['media_id_select']));
-      /*if (count($selected_media) > 1) {
-        $form_state->setErrorByName('', $this->t('You can select only one media.'));
-        return;
-      }*/
+
       $image_url = NULL;
       if ($media_id = $selected_media[0]) {
         $settings = $form_state->get('jsonapi_settings');
@@ -357,7 +354,7 @@ class ModalBrowserForm extends FormBase {
         'class' => ['browser-top'],
       ],
     ];
-    if (!empty($settings['sort_options'] || !empty($settings['search_filter']))) {
+    if ((!empty($settings['sort_options']) && count($settings['sort_options']) > 1) || !empty($settings['search_filter'])) {
       $render['top']['filter'] = [
         '#type' => 'container',
         '#attributes' => [
@@ -410,7 +407,6 @@ class ModalBrowserForm extends FormBase {
         'id' => 'filefield_filesources_jsonapi_action',
         'class' => ['browser-action'],
       ],
-//      '#printed' => $settings['cardinality'] === 1 ? TRUE : FALSE,
     ];
     $render['top']['action']['submit'] = [
       '#type' => 'submit',
@@ -536,7 +532,13 @@ class ModalBrowserForm extends FormBase {
   }
 
   /**
-   * @param $rest_api_url
+   * Do JSON API call with $rest_api_url.
+   *
+   * @param string $rest_api_url
+   *   Url with query params.
+   *
+   * @return mixed
+   *   JSON API response.
    */
   private function getJsonApiCall($rest_api_url) {
     $client = new Client();
