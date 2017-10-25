@@ -39,8 +39,8 @@ Define 'JSON API remote URL' file field source.
   - Modal window initial height.
   
 ## Info, requirements
-- URLs (URL, Thumbnail URL) must be relative to the remote server, no contains
-domain/base url. Base url is parsed from 'JSON API URL'.
+- URLs (URL, Thumbnail URL) must be relative to the remote server, shouldn't
+ contains domain/base url. Base url is parsed from 'JSON API URL'.
 - Sorting: You can add multiple sorting, e.g. 
 
       name,-created|Name
@@ -50,7 +50,7 @@ domain/base url. Base url is parsed from 'JSON API URL'.
 
       data->attribute->title
 
-- Attribute path to 'included' property - ff the needed information is coming
+- Attribute path to 'included' property - if the needed information is coming
 from relationship, e.g.: from field_image field, than you have to include it as
 request params:
   
