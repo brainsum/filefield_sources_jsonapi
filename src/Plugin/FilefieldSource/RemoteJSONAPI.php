@@ -24,6 +24,8 @@ class RemoteJSONAPI extends Remote {
 
   const REMOTE_JSONAPI_LISTER_ITEM_NUM = 12;
   const REMOTE_JSONAPI_LISTER_SORT = '-created|Newest first';
+  const REMOTE_JSONAPI_LISTER_MODAL_WIDTH = 1000;
+  const REMOTE_JSONAPI_LISTER_MODAL_HEIGHT = 750;
 
   /**
    * {@inheritdoc}
@@ -195,6 +197,7 @@ class RemoteJSONAPI extends Remote {
       '#filefield_source' => TRUE,
       '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REMOTE_HINT_TEXT,
       '#filefield_sources_remote_jsonapi_routing_params' => $routing_params,
+      '#filefield_sources_remote_jsonapi_settings' => $element['#filefield_sources_settings']['source_remote_jsonapi'],
     );
 
     $element['filefield_remote_jsonapi']['url'] = array(
@@ -252,6 +255,9 @@ class RemoteJSONAPI extends Remote {
     $element = $variables['element'];
     $element['url']['#field_suffix'] = drupal_render($element['transfer']);
 
+    $width = $element['#filefield_sources_remote_jsonapi_settings']['modal_width'] ?: self::REMOTE_JSONAPI_LISTER_MODAL_WIDTH;
+    $height = $element['#filefield_sources_remote_jsonapi_settings']['modal_height'] ?: self::REMOTE_JSONAPI_LISTER_MODAL_HEIGHT;
+
     $button = [
       '#type' => 'link',
       '#title' => t('Open JSON API browser'),
@@ -262,7 +268,7 @@ class RemoteJSONAPI extends Remote {
           'attributes' => [
             'class' => ['use-ajax'],
             'data-dialog-type' => 'modal',
-            'data-dialog-options' => Json::encode(['width' => 1000, 'height' => 750]),
+            'data-dialog-options' => Json::encode(['width' => $width, 'height' => $height]),
           ],
         ]
       ),
@@ -271,7 +277,6 @@ class RemoteJSONAPI extends Remote {
 
     $rendered_button = drupal_render($button);
 
-    // @todo - hide element with css.
     return '<div class="filefield-source filefield-source-remote_jsonapi clear-block">' . drupal_render($element['url']) . drupal_render($element['alt']) . drupal_render($element['title']) . $rendered_button . '</div>';
   }
 
@@ -355,6 +360,20 @@ class RemoteJSONAPI extends Remote {
       '#title' => t('Items to display'),
       '#description' => t('Number of items per page for browser.'),
       '#default_value' => isset($settings['source_remote_jsonapi']['items_per_page']) ? $settings['source_remote_jsonapi']['items_per_page'] : self::REMOTE_JSONAPI_LISTER_ITEM_NUM,
+    );
+    $return['source_remote_jsonapi']['modal_width'] = array(
+      '#type' => 'number',
+      '#min' => 400,
+      '#title' => t('Modal window width'),
+      '#description' => t('Modal window initial width.'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['modal_width']) ? $settings['source_remote_jsonapi']['modal_width'] : self::REMOTE_JSONAPI_LISTER_MODAL_WIDTH,
+    );
+    $return['source_remote_jsonapi']['modal_height'] = array(
+      '#type' => 'number',
+      '#min' => 200,
+      '#title' => t('Modal window height'),
+      '#description' => t('Modal window initial height.'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['modal_height']) ? $settings['source_remote_jsonapi']['modal_height'] : self::REMOTE_JSONAPI_LISTER_MODAL_HEIGHT,
     );
 
     return $return;
