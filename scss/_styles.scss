@@ -226,6 +226,9 @@ img {
     border: none;
     border-radius: 0;
     border-bottom: 1px solid #a6a6a6;
+    &:hover {
+      box-shadow: none;
+    }
   }
   .insert-button {
     border-color: #1e5c90;
@@ -233,5 +236,8 @@ img {
     color: #fff;
     text-shadow: 0 1px hsla(0, 0%, 0%, 0.5);
     font-weight: 700;
+    &:hover {
+      box-shadow: 0 1px 2px hsla(203, 10%, 10%, 0.25);
+    }
   }
 }
