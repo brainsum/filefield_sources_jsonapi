@@ -102,6 +102,10 @@ img {
   flex-direction: column;
   justify-content: space-between;
   padding: 8px;
+  &:hover {
+    background: rgba(45,57,60,.07);
+    border-radius: 4px;
+  }
   .form-checkbox {
     visibility: hidden;
   }
@@ -164,7 +168,7 @@ img {
     border: 5px solid white;
     display: block;
     height: auto;
-    width: auto;
+    width: 90%;
     margin: 0 auto;
     box-shadow: 0 0 0 0.5px rgba(49,49,93,.03), 0 2px 5px 0 rgba(49,49,93,.1), 0 1px 2px 0 rgba(0,0,0,.08);
     transition-duration: 0.2s;
@@ -193,10 +197,12 @@ img {
   img {
     display: block;
     margin: 0 auto;
-    box-shadow: 0 0 15px rgba(0,0,0,.35);
+    border: 5px solid white;
+    box-shadow: 0 0 0 0.5px rgba(49,49,93,.03), 0 2px 5px 0 rgba(49,49,93,.1), 0 1px 2px 0 rgba(0,0,0,.08);
     @include media-min(761px) {
       float: left;
       width: 60%;
+      box-sizing: border-box;
     }
   }
 }
@@ -225,7 +231,9 @@ img {
     background: none;
     border: none;
     border-radius: 0;
-    border-bottom: 1px solid #a6a6a6;
+    text-decoration: underline;
+    padding: 0;
+    font-weight: 400;
     &:hover {
       box-shadow: none;
     }
