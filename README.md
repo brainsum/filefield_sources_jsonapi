@@ -61,8 +61,8 @@ request params:
       data->relationships->field_image->included->attributes->filename
 
 ## Restrictions
-Widget/browser doesn't support multiple selecting. This means: You can use with
-more than 1 cardinality, but you can select remote images by one.
+Widget/browser doesn't support multiple selecting. This means: You can set the
+ cardinality to more than 1, but you can select remote images by one.
 
 ## Examples
 #### 1. Getting files from media image entities, field_image field
@@ -257,13 +257,11 @@ with content:
     }
 
 After that you can use in settings for 'Thumbnail URL attribute path':
- - for files (in examples #2 Getting images from managed files):
-
+- for files (in examples #2 Getting images from managed files):
 
       data->attributes->thumbnail_url
 
- - for media images (in examples #1 Getting files from media image entities,
+- for media images (in examples #1 Getting files from media image entities,
  field_image field):
-
 
       data->relationships->field_image->included->attributes->thumbnail_url
