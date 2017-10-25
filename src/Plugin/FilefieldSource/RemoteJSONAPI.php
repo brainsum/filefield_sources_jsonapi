@@ -22,8 +22,8 @@ use Drupal\Core\Field\WidgetInterface;
  */
 class RemoteJSONAPI extends Remote {
 
-  const REMOTE_JSONAPI_LISTER_ITEM_NUM = 10;
-  const REMOTE_JSONAPI_IMAGE_STYLE = 'original';
+  const REMOTE_JSONAPI_LISTER_ITEM_NUM = 12;
+  const REMOTE_JSONAPI_LISTER_SORT = '-created|Newest first';
 
   /**
    * {@inheritdoc}
@@ -308,7 +308,7 @@ class RemoteJSONAPI extends Remote {
     $return['source_remote_jsonapi']['params'] = [
       '#type' => 'textarea',
       '#title' => t('Params'),
-      '#description' => t('The possible values for sorting. Enter one value per line, in the format key|label.<br />E.g.<br />include|field_image<br />fields[media--image]|name,field_category,field_image'),
+      '#description' => t('The query parameters. Enter one per line, in the format key|value.<br />E.g.<br />include|field_image<br />fields[media--image]|name,field_category,field_image'),
       '#default_value' => isset($settings['source_remote_jsonapi']['params']) ? $settings['source_remote_jsonapi']['params'] : '',
       '#rows' => 10,
     ];
@@ -317,6 +317,12 @@ class RemoteJSONAPI extends Remote {
       '#title' => t('URL attribute path'),
       '#description' => t('Enter attribute name for the file URL. E.g. data->field_image->included->attributes->url'),
       '#default_value' => isset($settings['source_remote_jsonapi']['url_attribute_path']) ? $settings['source_remote_jsonapi']['url_attribute_path'] : NULL,
+    ];
+    $return['source_remote_jsonapi']['thumbnail_url_attribute_path'] = [
+      '#type' => 'textfield',
+      '#title' => t('Thumbnail URL attribute path'),
+      '#description' => t('Enter attribute name for the thumbnail file URL. E.g. data->field_image->included->attributes->thumbnail_url'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['thumbnail_url_attribute_path']) ? $settings['source_remote_jsonapi']['thumbnail_url_attribute_path'] : NULL,
     ];
     $return['source_remote_jsonapi']['alt_attribute_path'] = [
       '#type' => 'textfield',
@@ -333,8 +339,8 @@ class RemoteJSONAPI extends Remote {
     $return['source_remote_jsonapi']['sort_option_list'] = [
       '#type' => 'textarea',
       '#title' => t('Sorting option list'),
-      '#description' => t('The query parameters. Enter one per line, in the format key|value. The first value will be the default.<br />E.g.<br />name|Name<br />-created|Created'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['sort_option_list']) ? $settings['source_remote_jsonapi']['sort_option_list'] : '',
+      '#description' => t('The possible values for sorting. Enter one value per line, in the format key|label. The first value will be the default. Selector will be displeyed only if you enter more than one.<br />E.g.<br />-created|Newest first<br />name|Name'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['sort_option_list']) ? $settings['source_remote_jsonapi']['sort_option_list'] : self::REMOTE_JSONAPI_LISTER_SORT,
       '#rows' => 5,
     ];
     $return['source_remote_jsonapi']['search_filter'] = [

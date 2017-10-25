@@ -49,6 +49,8 @@ class ModalBrowserForm extends FormBase {
     }
     $settings['cardinality'] = FieldStorageConfig::loadByName($entity_type, $field_name)
       ->getCardinality();
+    $field_settings = \Drupal::getContainer()->get('entity_field.manager')->getFieldDefinitions($entity_type, $bundle)[$field_name]->getSettings();
+    $settings['field_settings'] = $field_settings;
 
     $form_state->set('jsonapi_settings', $settings);
 
@@ -105,6 +107,7 @@ class ModalBrowserForm extends FormBase {
    */
   public function buildInsertForm(array &$form, FormStateInterface $form_state) {
     $image = $form_state->get('fetched_image');
+    $settings = $form_state->get('jsonapi_settings');
     $form['title'] = [
       '#type' => 'item',
       '#title' => $this->t('Insert selected'),
@@ -123,16 +126,22 @@ class ModalBrowserForm extends FormBase {
       '#type' => 'container',
       '#attributes' => ['class' => ['details-wrapper']],
     ];
-    $form['wrapper']['detail']['title'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Title'),
-      '#default_value' => $image['title'],
-    ];
-    $form['wrapper']['detail']['alt'] = [
-      '#type' => 'textfield',
-      '#title' => $this->t('Alt'),
-      '#default_value' => $image['alt'],
-    ];
+    if ($settings['field_settings']['title_field']) {
+      $form['wrapper']['detail']['title'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Title'),
+        '#default_value' => $image['title'],
+        '#required' => $settings['field_settings']['title_field_required'] ? TRUE : FALSE,
+      ];
+    }
+    if ($settings['field_settings']['alt_field']) {
+      $form['wrapper']['detail']['alt'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Alt'),
+        '#default_value' => $image['alt'],
+        '#required' => $settings['field_settings']['alt_field_required'] ? TRUE : FALSE,
+      ];
+    }
 
     $form['actions'] = [
       '#type' => 'actions',
@@ -356,6 +365,9 @@ class ModalBrowserForm extends FormBase {
             'wrapper' => 'filefield_filesources_jsonapi_lister',
           ],
         ];
+        if (count($settings['sort_options']) < 2) {
+          $render['top']['filter']['sort']['#printed'] = TRUE;
+        }
       }
       if (!empty($settings['search_filter'])) {
         $render['top']['filter']['name'] = [
@@ -374,6 +386,7 @@ class ModalBrowserForm extends FormBase {
             'callback' => '::ajaxPagerCallback',
             'wrapper' => 'filefield_filesources_jsonapi_lister',
           ],
+          '#attributes' => ['class' => ['visually-hidden']],
         ];
       }
     }
@@ -412,7 +425,8 @@ class ModalBrowserForm extends FormBase {
     ];
     foreach ($response->data as $data) {
       $media_id = $data->id;
-      $thumbnail_url = $this->getJsonApiDatabyPath($response, $settings['url_attribute_path'], $data);
+      $thumbnail_url_attribute_path = $settings['thumbnail_url_attribute_path'] ?: $settings['url_attribute_path'];
+      $thumbnail_url = $this->getJsonApiDatabyPath($response, $thumbnail_url_attribute_path, $data);
       if ($media_id && $thumbnail_url) {
         $render['lister']['media'][$media_id] = [
           '#type' => 'container',
@@ -439,14 +453,14 @@ class ModalBrowserForm extends FormBase {
         $img = [
           '#theme' => 'image',
           '#uri' => $api_url_base . $thumbnail_url,
-          '#width' => '100',
+          '#width' => '120',
         ];
         $render['lister']['media'][$media_id]['media_id'] = [
           '#theme' => 'browser_media_box',
           '#checkbox' => $checkbox,
           '#checkbox_id' => $media_id,
           '#img' => $img,
-          '#title' => $data->attributes->name,
+          '#title' => $this->getJsonApiDatabyPath($response, $settings['title_attribute_path'], $data),
         ];
       }
     }
@@ -549,17 +563,23 @@ class ModalBrowserForm extends FormBase {
       $attribute_data = $response;
     }
     $value = NULL;
-    list($data_path, $included_path) = explode('->included->', $pathString);
+    if (strstr($pathString, '->included->')) {
+      list($data_path, $included_path) = explode('->included->', $pathString);
+    }
+    else {
+      $data_path = $pathString;
+      $included_path = NULL;
+    }
     foreach (explode('->', $data_path) as $property) {
       $attribute_data = $attribute_data->{$property};
     }
     if (!empty($included_path)) {
       foreach ($response->included as $included) {
         $included_data = $included;
-        foreach (explode('->', $included_path) as $property) {
-          $included_data = $included_data->{$property};
-        }
         if ($attribute_data->data->type === $included->type && $attribute_data->data->id === $included->id) {
+          foreach (explode('->', $included_path) as $property) {
+            $included_data = $included_data->{$property};
+          }
           $value = $included_data;
           break;
         }
