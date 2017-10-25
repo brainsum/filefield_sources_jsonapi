@@ -255,8 +255,8 @@ class RemoteJSONAPI extends Remote {
     $element = $variables['element'];
     $element['url']['#field_suffix'] = drupal_render($element['transfer']);
 
-    $width = $element['#filefield_sources_remote_jsonapi_settings']['modal_width'] ?: self::REMOTE_JSONAPI_LISTER_MODAL_WIDTH;
-    $height = $element['#filefield_sources_remote_jsonapi_settings']['modal_height'] ?: self::REMOTE_JSONAPI_LISTER_MODAL_HEIGHT;
+    $width = isset($element['#filefield_sources_remote_jsonapi_settings']['modal_width']) ? $element['#filefield_sources_remote_jsonapi_settings']['modal_width'] : self::REMOTE_JSONAPI_LISTER_MODAL_WIDTH;
+    $height = isset($element['#filefield_sources_remote_jsonapi_settings']['modal_height']) ? $element['#filefield_sources_remote_jsonapi_settings']['modal_height'] : self::REMOTE_JSONAPI_LISTER_MODAL_HEIGHT;
 
     $button = [
       '#type' => 'link',
