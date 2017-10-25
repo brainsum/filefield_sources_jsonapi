@@ -45,21 +45,18 @@ domain/base url. Base url is parsed from 'JSON API URL'.
 
       name,-created|Name
 
-- Attribute path to 'data' property:
-  - If the needed information is in the 'data' property of the response, e.g.:
-  
+- Attribute path to 'data' property - if the needed information is in the 'data'
+ property of the response, e.g.:
 
       data->attribute->title
 
-- Attribute path to 'included' property:
-   - If the needed information is coming from relationship, e.g.: from
-  field_image field, Than you have to include it as request params:
-  
+- Attribute path to 'included' property - ff the needed information is coming
+from relationship, e.g.: from field_image field, than you have to include it as
+request params:
   
       include|field_image
    
    and getting data (filename from referenced image):
-  
 
       data->relationships->field_image->included->attributes->filename
 
