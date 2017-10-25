@@ -262,7 +262,7 @@ class RemoteJSONAPI extends Remote {
           'attributes' => [
             'class' => ['use-ajax'],
             'data-dialog-type' => 'modal',
-            'data-dialog-options' => Json::encode(['width' => 1000]),
+            'data-dialog-options' => Json::encode(['width' => 1000, 'height' => 600]),
           ],
         ]
       ),
