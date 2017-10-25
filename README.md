@@ -29,8 +29,30 @@ Define 'JSON API remote URL' filefield source.
   - Item number per page.
   
 ## Info, requirements
-URLs (URL, Thumbnail URL) must be relative to the remote server, no contains
+- URLs (URL, Thumbnail URL) must be relative to the remote server, no contains
 domain/base url. Base url is parsed from 'JSON API URL'.
+- Sorting: You can add multiple sorting, e.g. 
+
+    
+      name,-created|Name
+
+- Attribute path from 'data' property:
+  - If the needed information is in the 'data' property of the response, e.g.:
+  
+
+      data->attribute->title
+
+- Attribute path from 'included' property:
+   - If the needed information is comming from relationship, e.g.: from
+  field_image field, Than you have to include it as request params:
+  
+  
+      include|field_image
+   
+   and getting data (filename from referenced image):
+  
+
+      data->relationships->field_image->included->attributes->filename
 
 ## Restrictions
 Widget/browser doesn't support multiple selecting. This means: You can use with
@@ -78,3 +100,21 @@ file name, sorting by created date (descending).
     - Sorting option list:
         - -created|Newest first
     - Search filter attribute name: filename
+    
+#### 3. Sorting
+Sorting by created date (DESC) and name together, using 'Newest first' label:
+
+    -created,name|Newest first
+    
+#### 4. Searching in media image bundle and in taxonomy term
+First, we have to include referenced taxonomy using include param:
+
+    include|field_category
+
+Now we can add it to search field:
+
+    name,field_category
+
+Multiple fields are grouped with 'OR' conjunction. 
+    
+
