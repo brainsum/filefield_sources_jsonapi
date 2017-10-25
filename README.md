@@ -128,3 +128,145 @@ Now we can add it to search field:
     name,field_category
 
 Multiple fields are grouped with 'OR' conjunction. 
+
+#### 5. Thumbnail in browser
+It's better to use thumbnail size in lister instead of rendering original
+images - could be unnecessary big for listing (slower rendering = worse UX). To
+provide custom URL for thumbnail you need develop on JSON server side. One
+possible solution is to add thumbnail_url computed field for every file entities
+of image type via hook_entity_base_field_info() in your custom module - based on
+json_api's 'Download URL' defined with jsonapi_entity_base_field_info():
+
+    use Drupal\Core\Field\BaseFieldDefinition;
+    use Drupal\Core\Entity\EntityTypeInterface;
+
+    /**
+     * Implements hook_entity_base_field_info().
+     *
+     * Provide thumbnail_url for json api - The relative image style url of the
+     * image uri.
+     */
+    function [MODULE_NAME]_entity_base_field_info(EntityTypeInterface $entity_type) {
+      $fields = [];
+      if ($entity_type->id() === 'file') {
+        $fields['thumbnail_url'] = BaseFieldDefinition::create('string')
+          ->setLabel(t('Thumbnail image style URL'))
+          ->setDescription(t('The download URL of the thumbnail image style of the image.'))
+          ->setComputed(TRUE)
+          ->setQueryable(FALSE)
+          ->setClass('\Drupal\[MODULE_NAME]\Field\ThumbnailJsonApiDownloadUrl');
+      }
+      return $fields;
+    }
+
+Then you have define specified ThumbnailJsonApiDownloadUrl class at:
+
+    src/Field/ThumbnailJsonApiDownloadUrl.php
+
+with content:
+
+    <?php
+
+    namespace Drupal\tieto_media_library\Field;
+
+    use Drupal\Core\Field\FieldItemList;
+    use Drupal\Core\Session\AccountInterface;
+    use Drupal\image\Entity\ImageStyle;
+
+    /**
+     * Field definition to provide relative image style url for file entities.
+     *
+     * For 'image/*' filemime return relative image style url of the uri.
+     */
+    class ImageStyleDownloadUrl extends FieldItemList {
+
+      const IMAGE_STYLE = 'medium';
+
+      /**
+       * Creates a relative thumbnail image style URL from file's URI.
+       *
+       * @param string $uri
+       *   The URI to transform.
+       *
+       * @return string
+       *   The transformed relative URL.
+       */
+      protected function fileCreateThumbnailUrl($uri) {
+        $style = ImageStyle::load(self::IMAGE_STYLE);
+        $url = $style->buildUrl($uri);
+        return file_url_transform_relative(file_create_url($url));
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      public function getValue($include_computed = FALSE) {
+        $this->initList();
+
+        return parent::getValue($include_computed);
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      public function access($operation = 'view', AccountInterface $account = NULL, $return_as_object = FALSE) {
+        return $this->getEntity()
+          ->get('uri')
+          ->access($operation, $account, $return_as_object);
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      public function isEmpty() {
+        return $this->getEntity()->get('uri')->isEmpty();
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      public function getIterator() {
+        $this->initList();
+
+        return parent::getIterator();
+      }
+
+      /**
+       * {@inheritdoc}
+       */
+      public function get($index) {
+        $this->initList();
+
+        return parent::get($index);
+      }
+
+      /**
+       * Initialize the internal field list with the modified items.
+       */
+      protected function initList() {
+        if ($this->list) {
+          return;
+        }
+        $url_list = [];
+        foreach ($this->getEntity()->get('uri') as $delta => $uri_item) {
+          if (preg_match('/image/', $this->getEntity()->get('filemime')[$delta]->value)) {
+            $path = $this->fileCreateThumbnailUrl($uri_item->value);
+            $url_list[$delta] = $this->createItem($delta, $path);
+          }
+        }
+        $this->list = $url_list;
+      }
+
+    }
+
+After that you can use in settings for 'Thumbnail URL attribute path':
+ - for files (in examples #2 Getting images from managed files):
+
+
+      data->attributes->thumbnail_url
+
+ - for media images (in examples #1 Getting files from media image entities,
+ field_image field):
+
+
+      data->relationships->field_image->included->attributes->thumbnail_url
