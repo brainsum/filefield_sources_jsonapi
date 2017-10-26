@@ -4,6 +4,7 @@ namespace Drupal\filefield_sources_jsonapi\Plugin\FilefieldSource;
 
 use Drupal\filefield_sources\Plugin\FilefieldSource\Remote;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\field\Entity\FieldConfig;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Url;
@@ -29,16 +30,18 @@ class RemoteJSONAPI extends Remote {
 
   /**
    * {@inheritdoc}
+   *
+   * Based on Remote->value().
    */
   public static function value(array &$element, &$input, FormStateInterface $form_state) {
     if (isset($input['filefield_remote_jsonapi']['url']) && strlen($input['filefield_remote_jsonapi']['url']) > 0 && UrlHelper::isValid($input['filefield_remote_jsonapi']['url']) && $input['filefield_remote_jsonapi']['url'] != FILEFIELD_SOURCE_REMOTE_HINT_TEXT) {
-      $field = entity_load('field_config', $element['#entity_type'] . '.' . $element['#bundle'] . '.' . $element['#field_name']);
+      $field = FieldConfig::loadByName($element['#entity_type'], $element['#bundle'], $element['#field_name']);
       $url = $input['filefield_remote_jsonapi']['url'];
 
       // Check that the destination is writable.
       $temporary_directory = 'temporary://';
       if (!file_prepare_directory($temporary_directory, FILE_MODIFY_PERMISSIONS)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', array('%directory' => drupal_realpath($temporary_directory)));
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', array('%directory' => \Drupal::service('file_system')->realpath($temporary_directory)));
         drupal_set_message(t('The file could not be transferred because the temporary directory is not writable.'), 'error');
         return;
       }
@@ -49,8 +52,8 @@ class RemoteJSONAPI extends Remote {
 
       // This first chmod check is for other systems such as S3, which don't
       // work with file_prepare_directory().
-      if (!drupal_chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => drupal_realpath($directory)));
+      if (!\Drupal::service('file_system')->chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => \Drupal::service('file_system')->realpath($directory)));
         drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $url)), 'error');
         return;
       }
@@ -253,7 +256,7 @@ class RemoteJSONAPI extends Remote {
    */
   public static function element($variables) {
     $element = $variables['element'];
-    $element['url']['#field_suffix'] = drupal_render($element['transfer']);
+    $element['url']['#field_suffix'] = \Drupal::service('renderer')->render($element['transfer']);
 
     $width = isset($element['#filefield_sources_remote_jsonapi_settings']['modal_width']) ? $element['#filefield_sources_remote_jsonapi_settings']['modal_width'] : self::REMOTE_JSONAPI_LISTER_MODAL_WIDTH;
     $height = isset($element['#filefield_sources_remote_jsonapi_settings']['modal_height']) ? $element['#filefield_sources_remote_jsonapi_settings']['modal_height'] : self::REMOTE_JSONAPI_LISTER_MODAL_HEIGHT;
@@ -275,9 +278,9 @@ class RemoteJSONAPI extends Remote {
       '#attributes' => ['class' => ['button']],
     ];
 
-    $rendered_button = drupal_render($button);
+    $rendered_button = \Drupal::service('renderer')->render($button);
 
-    return '<div class="filefield-source filefield-source-remote_jsonapi clear-block">' . drupal_render($element['url']) . drupal_render($element['alt']) . drupal_render($element['title']) . $rendered_button . '</div>';
+    return '<div class="filefield-source filefield-source-remote_jsonapi clear-block">' . \Drupal::service('renderer')->render($element['url']) . \Drupal::service('renderer')->render($element['alt']) . \Drupal::service('renderer')->render($element['title']) . $rendered_button . '</div>';
   }
 
   /**
