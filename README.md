@@ -1,5 +1,10 @@
 # File field source JSON API module
 Define 'JSON API remote URL' file field source.
+
+## Restrictions
+- Widget/browser doesn't support multiple selecting. This means: You can set the
+ cardinality to more than 1, but you can select remote images by one.
+ - Works only with image fields.
   
 ## Configuration
 - Enable 'JSON API remote URL' on form display for image field widget.
@@ -59,10 +64,6 @@ request params:
    and getting data (filename from referenced image):
 
       data->relationships->field_image->included->attributes->filename
-
-## Restrictions
-Widget/browser doesn't support multiple selecting. This means: You can set the
- cardinality to more than 1, but you can select remote images by one.
 
 ## Examples
 #### 1. Getting files from media image entities, field_image field
