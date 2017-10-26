@@ -252,7 +252,7 @@ class RemoteJSONAPI extends Remote {
   /**
    * Theme the output of the remote element.
    *
-   * @todo - make modal part of the form.
+   * @todo - refactor.
    */
   public static function element($variables) {
     $element = $variables['element'];
