@@ -41,7 +41,7 @@ class RemoteJSONAPI extends Remote {
       // Check that the destination is writable.
       $temporary_directory = 'temporary://';
       if (!file_prepare_directory($temporary_directory, FILE_MODIFY_PERMISSIONS)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', array('%directory' => \Drupal::service('file_system')->realpath($temporary_directory)));
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'The directory %directory is not writable, because it does not have the correct permissions set.', ['%directory' => \Drupal::service('file_system')->realpath($temporary_directory)]);
         drupal_set_message(t('The file could not be transferred because the temporary directory is not writable.'), 'error');
         return;
       }
@@ -53,8 +53,8 @@ class RemoteJSONAPI extends Remote {
       // This first chmod check is for other systems such as S3, which don't
       // work with file_prepare_directory().
       if (!\Drupal::service('file_system')->chmod($directory, $mode) && !file_prepare_directory($directory, FILE_CREATE_DIRECTORY)) {
-        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', array('%file' => $url, '%destination' => \Drupal::service('file_system')->realpath($directory)));
-        drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', array('%file' => $url)), 'error');
+        \Drupal::logger('filefield_sources')->log(E_NOTICE, 'File %file could not be copied, because the destination directory %destination is not configured correctly.', ['%file' => $url, '%destination' => \Drupal::service('file_system')->realpath($directory)]);
+        drupal_set_message(t('The specified file %file could not be copied, because the destination directory is not properly configured. This may be caused by a problem with file or directory permissions. More information is available in the system log.', ['%file' => $url]), 'error');
         return;
       }
 
@@ -65,7 +65,7 @@ class RemoteJSONAPI extends Remote {
       curl_setopt($ch, CURLOPT_HEADER, TRUE);
       curl_setopt($ch, CURLOPT_NOBODY, TRUE);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-      curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(get_called_class(), 'parseHeader'));
+      curl_setopt($ch, CURLOPT_HEADERFUNCTION, [get_called_class(), 'parseHeader']);
       // Causes a warning if PHP safe mode is on.
       @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
       curl_exec($ch);
@@ -88,7 +88,7 @@ class RemoteJSONAPI extends Remote {
             break;
 
           default:
-            $form_state->setError($element, t('The remote file could not be transferred due to an HTTP error (@code).', array('@code' => $info['http_code'])));
+            $form_state->setError($element, t('The remote file could not be transferred due to an HTTP error (@code).', ['@code' => $info['http_code']]));
         }
         return;
       }
@@ -129,7 +129,7 @@ class RemoteJSONAPI extends Remote {
       $extensions = $field->getSetting('file_extensions');
       $regex = '/\.(' . preg_replace('/[ +]/', '|', preg_quote($extensions)) . ')$/i';
       if (!empty($extensions) && !preg_match($regex, $filename)) {
-        $form_state->setError($element, t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions)));
+        $form_state->setError($element, t('Only files with the following extensions are allowed: %files-allowed.', ['%files-allowed' => $extensions]));
         return;
       }
 
@@ -138,16 +138,16 @@ class RemoteJSONAPI extends Remote {
         $max_size = $element['#upload_validators']['file_validate_size'][0];
         $file_size = $info['download_content_length'];
         if ($file_size > $max_size) {
-          $form_state->setError($element, t('The remote file is %filesize exceeding the maximum file size of %maxsize.', array('%filesize' => format_size($file_size), '%maxsize' => format_size($max_size))));
+          $form_state->setError($element, t('The remote file is %filesize exceeding the maximum file size of %maxsize.', ['%filesize' => format_size($file_size), '%maxsize' => format_size($max_size)]));
           return;
         }
       }
 
       // Set progress bar information.
-      $options = array(
+      $options = [
         'key' => $element['#entity_type'] . '_' . $element['#bundle'] . '_' . $element['#field_name'] . '_' . $element['#delta'],
         'filepath' => $filepath,
-      );
+      ];
       static::setTransferOptions($options);
 
       $transfer_success = FALSE;
@@ -165,7 +165,7 @@ class RemoteJSONAPI extends Remote {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_HEADER, FALSE);
-        curl_setopt($ch, CURLOPT_WRITEFUNCTION, array(get_called_class(), 'curlWrite'));
+        curl_setopt($ch, CURLOPT_WRITEFUNCTION, [get_called_class(), 'curlWrite']);
         // Causes a warning if PHP safe mode is on.
         @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
         $transfer_success = curl_exec($ch);
@@ -192,7 +192,7 @@ class RemoteJSONAPI extends Remote {
       'form_mode' => 'default',
       'field_name' => $element['#field_name'],
     ];
-    $element['filefield_remote_jsonapi'] = array(
+    $element['filefield_remote_jsonapi'] = [
       '#weight' => 100.5,
       '#theme' => 'filefield_sources_element',
       '#source_id' => 'remote_jsonapi',
@@ -201,22 +201,22 @@ class RemoteJSONAPI extends Remote {
       '#filefield_sources_hint_text' => FILEFIELD_SOURCE_REMOTE_HINT_TEXT,
       '#filefield_sources_remote_jsonapi_routing_params' => $routing_params,
       '#filefield_sources_remote_jsonapi_settings' => $element['#filefield_sources_settings']['source_remote_jsonapi'],
-    );
+    ];
 
-    $element['filefield_remote_jsonapi']['url'] = array(
+    $element['filefield_remote_jsonapi']['url'] = [
       '#type' => 'textfield',
       '#description' => filefield_sources_element_validation_help($element['#upload_validators']),
       '#maxlength' => NULL,
       '#attributes' => ['class' => ['visually-hidden']],
-    );
-    $element['filefield_remote_jsonapi']['alt'] = array(
+    ];
+    $element['filefield_remote_jsonapi']['alt'] = [
       '#type' => 'hidden',
       '#value' => '',
-    );
-    $element['filefield_remote_jsonapi']['title'] = array(
+    ];
+    $element['filefield_remote_jsonapi']['title'] = [
       '#type' => 'hidden',
       '#value' => '',
-    );
+    ];
 
     $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
@@ -239,7 +239,7 @@ class RemoteJSONAPI extends Remote {
       '#name' => implode('_', $element['#parents']) . '_transfer',
       '#type' => 'submit',
       '#value' => t('Transfer'),
-      '#validate' => array(),
+      '#validate' => [],
       '#submit' => ['filefield_sources_field_submit'],
       '#limit_validation_errors' => [$element['#parents']],
       '#ajax' => $ajax_settings,
@@ -287,32 +287,32 @@ class RemoteJSONAPI extends Remote {
    * Implements hook_filefield_source_settings().
    */
   public static function settings(WidgetInterface $plugin) {
-    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', array(
-      'source_remote_jsonapi' => array(
+    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', [
+      'source_remote_jsonapi' => [
         'api_url' => NULL,
         'items_per_page' => self::REMOTE_JSONAPI_LISTER_ITEM_NUM,
-      ),
-    ));
+      ],
+    ]);
 
-    $return['source_remote_jsonapi'] = array(
+    $return['source_remote_jsonapi'] = [
       '#title' => t('JSON Api settings'),
       '#type' => 'details',
       '#description' => t('Enable JSON API browser'),
       '#weight' => 10,
-      '#states' => array(
-        'visible' => array(
-          ':input[name="fields[field_file_image][settings_edit_form][third_party_settings][filefield_sources][filefield_sources][sources][remote_jsonapi]"]' => array('checked' => TRUE),
-        ),
-      ),
-    );
-    $return['source_remote_jsonapi']['api_url'] = array(
+      '#states' => [
+        'visible' => [
+          ':input[name="fields[field_file_image][settings_edit_form][third_party_settings][filefield_sources][filefield_sources][sources][remote_jsonapi]"]' => ['checked' => TRUE],
+        ],
+      ],
+    ];
+    $return['source_remote_jsonapi']['api_url'] = [
       '#type' => 'textfield',
       '#title' => t('JSON Api URL'),
       '#default_value' => isset($settings['source_remote_jsonapi']['api_url']) ? $settings['source_remote_jsonapi']['api_url'] : NULL,
       '#size' => 60,
       '#maxlength' => 128,
       '#description' => t('The JSON API Url for browser.'),
-    );
+    ];
     $return['source_remote_jsonapi']['params'] = [
       '#type' => 'textarea',
       '#title' => t('Params'),
@@ -357,27 +357,27 @@ class RemoteJSONAPI extends Remote {
       '#description' => t('Enter attribute name for search field. On empty, the search filter will not be active. Multiple fields can be added separated with comma. E.g.: filename,field_category'),
       '#default_value' => isset($settings['source_remote_jsonapi']['search_filter']) ? $settings['source_remote_jsonapi']['search_filter'] : '',
     ];
-    $return['source_remote_jsonapi']['items_per_page'] = array(
+    $return['source_remote_jsonapi']['items_per_page'] = [
       '#type' => 'number',
       '#min' => 1,
       '#title' => t('Items to display'),
       '#description' => t('Number of items per page for browser.'),
       '#default_value' => isset($settings['source_remote_jsonapi']['items_per_page']) ? $settings['source_remote_jsonapi']['items_per_page'] : self::REMOTE_JSONAPI_LISTER_ITEM_NUM,
-    );
-    $return['source_remote_jsonapi']['modal_width'] = array(
+    ];
+    $return['source_remote_jsonapi']['modal_width'] = [
       '#type' => 'number',
       '#min' => 400,
       '#title' => t('Modal window width'),
       '#description' => t('Modal window initial width.'),
       '#default_value' => isset($settings['source_remote_jsonapi']['modal_width']) ? $settings['source_remote_jsonapi']['modal_width'] : self::REMOTE_JSONAPI_LISTER_MODAL_WIDTH,
-    );
-    $return['source_remote_jsonapi']['modal_height'] = array(
+    ];
+    $return['source_remote_jsonapi']['modal_height'] = [
       '#type' => 'number',
       '#min' => 200,
       '#title' => t('Modal window height'),
       '#description' => t('Modal window initial height.'),
       '#default_value' => isset($settings['source_remote_jsonapi']['modal_height']) ? $settings['source_remote_jsonapi']['modal_height'] : self::REMOTE_JSONAPI_LISTER_MODAL_HEIGHT,
-    );
+    ];
 
     return $return;
   }

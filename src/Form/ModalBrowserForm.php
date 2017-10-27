@@ -32,7 +32,7 @@ class ModalBrowserForm extends FormBase {
     $form['#prefix'] = '<div id="filefield-sources-jsonapi-browser-form">';
     $form['#suffix'] = '</div>';
 
-    if ($image = $form_state->get('fetched_image') && $form_state->get('form_type') === 'insert') {
+    if ($form_state->get('fetched_image') && $form_state->get('form_type') === 'insert') {
       return self::buildInsertForm($form, $form_state);
     }
 
@@ -221,7 +221,7 @@ class ModalBrowserForm extends FormBase {
     if ($form_state->getTriggeringElement()['#name'] === 'insert_selected') {
       $selected_media = array_values(array_filter($form_state->getUserInput()['media_id_select']));
 
-      $image_url = NULL;
+      $image = NULL;
       if ($media_id = $selected_media[0]) {
         $settings = $form_state->get('jsonapi_settings');
 
@@ -314,10 +314,7 @@ class ModalBrowserForm extends FormBase {
    *   Array of ajax commands to execute on submit of the modal form.
    */
   public function ajaxSubmitForm(array &$form, FormStateInterface $form_state) {
-    // Clear the message set by the submit handler.
-//    drupal_get_messages();
-
-    // We begin building a new ajax reponse.
+    // We begin building a new ajax response.
     $response = new AjaxResponse();
     if ($form_state->getErrors()) {
       unset($form['#prefix']);
