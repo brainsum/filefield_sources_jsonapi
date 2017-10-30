@@ -259,8 +259,8 @@ img {
     display: none;
   }
 }
-.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
-  float: none !important; //@fixme with custopm modal box class
+.ui-dialog .ui-dialog-buttonpane div.ui-dialog-buttonset {
+  float: none;
   text-align: center;
   .cancel-button {
     background: none;
