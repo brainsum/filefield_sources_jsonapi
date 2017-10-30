@@ -10,6 +10,30 @@ img {
   -moz-osx-font-smoothing: grayscale;
 }
 
+@keyframes spinner {
+  to {transform: rotate(360deg);}
+}
+
+div.ui-dialog .ajax-progress-throbber {
+  border: none;
+  background: none;
+  &::before {
+    content: '';
+    box-sizing: border-box;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin-top: -15px;
+    margin-left: -15px;
+    border-radius: 50%;
+    border: 1px solid $drupal-lgray;
+    border-top-color: $drupal-blue;
+    animation: spinner .6s linear infinite;
+  }
+}
+
 
 // Step1 | filters
 #filefield_filesources_jsonapi_filter {
@@ -89,6 +113,9 @@ img {
   }
 }
 .browser-lister {
+  .form-item__icon {
+    display: none;
+  }
   .button {
     position: absolute;
     bottom: 30px;
