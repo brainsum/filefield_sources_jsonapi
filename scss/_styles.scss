@@ -105,12 +105,12 @@ div.ui-dialog .ajax-progress-throbber {
 
 
 // Step1 | image lister
+#filefield_filesources_jsonapi_action {
+  display: none;
+}
 #filefield_filesources_jsonapi_lister {
   @include clearfix;
-  padding: .75em 0;
-  @include media-min(601px) {
-    padding: 1em 0;
-  }
+  padding: 0;
 }
 .browser-lister {
   .form-item__icon {
@@ -246,7 +246,7 @@ div.ui-dialog .ajax-progress-throbber {
 
 // Step2
 #filefield-sources-jsonapi-browser-form {
-  padding: 15px;
+  padding: 5px;
 }
 .insert-wrapper {
   @include clearfix;
