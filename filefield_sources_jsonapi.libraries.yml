@@ -1,5 +1,5 @@
 modal:
-  version: beta-7
+  version: beta-8
   css:
     component:
       css/modal.css: {}
