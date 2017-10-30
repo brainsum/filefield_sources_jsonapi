@@ -5,11 +5,11 @@
     attach: function (context, settings) {
       var $insert_button = $("#filefield_filesources_jsonapi_action input[name='insert_selected']");
 
-      $('.form-type-checkbox + label').each(function(){
-        $(this).find('img').wrapAll('<div class="form-image" />').wrapAll('<div class="image" />');
+      $('.js-form-type-checkbox + label').each(function(){
+        $(this).find('img').once('image-form-wrapper').wrapAll('<div class="form-image" />').once('image-wrapper').wrapAll('<div class="image" />');
       });
       $('input.form-checkbox').on('click', function() {
-        var $parent = $(this).closest('.form-type-checkbox');
+        var $parent = $(this).closest('.js-form-type-checkbox');
         $insert_button.mousedown();
         if ($(this).is(':checked')) {
           $parent.addClass('checked');
