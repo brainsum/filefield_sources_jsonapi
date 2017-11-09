@@ -123,7 +123,7 @@ First, we have to include referenced taxonomy using include param:
 
 Now we can add it to search field:
 
-    name,field_category
+    name,field_category.name
 
 Multiple fields are grouped with 'OR' conjunction. 
 
