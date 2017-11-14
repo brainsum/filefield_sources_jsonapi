@@ -13,7 +13,7 @@
     Drupal.behaviors.filefieldSourcesJsonApiWidget = {
         attach: function (context, settings) {
             $(".filefield-sources-list a.filefield-source-remote_jsonapi").on("click", function (e) {
-                $(this).closest(".image-widget-data").find(".filefield-source-remote_jsonapi a").click();
+                $(this).closest(".form-managed-file").find(".filefield-source-remote_jsonapi a").click();
             });
         }
     };
