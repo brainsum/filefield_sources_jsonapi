@@ -68,6 +68,7 @@ class RemoteJSONAPI extends Remote {
       curl_setopt($ch, CURLOPT_HEADERFUNCTION, [get_called_class(), 'parseHeader']);
       // Causes a warning if PHP safe mode is on.
       @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
+
       curl_exec($ch);
       $info = curl_getinfo($ch);
       if ($info['http_code'] != 200) {
@@ -209,14 +210,18 @@ class RemoteJSONAPI extends Remote {
       '#maxlength' => NULL,
       '#attributes' => ['class' => ['visually-hidden']],
     ];
-    $element['filefield_remote_jsonapi']['alt'] = [
-      '#type' => 'hidden',
-      '#value' => '',
-    ];
-    $element['filefield_remote_jsonapi']['title'] = [
-      '#type' => 'hidden',
-      '#value' => '',
-    ];
+    if (isset($element['#alt_field'])) {
+      $element['filefield_remote_jsonapi']['alt'] = [
+        '#type' => 'hidden',
+        '#value' => '',
+      ];
+    }
+    if (isset($element['#title_field'])) {
+      $element['filefield_remote_jsonapi']['title'] = [
+        '#type' => 'hidden',
+        '#value' => '',
+      ];
+    }
 
     $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
@@ -332,12 +337,14 @@ class RemoteJSONAPI extends Remote {
       '#description' => t('Enter attribute name for the thumbnail file URL. E.g. data->relationships->field_image->included->attributes->thumbnail_url'),
       '#default_value' => isset($settings['source_remote_jsonapi']['thumbnail_url_attribute_path']) ? $settings['source_remote_jsonapi']['thumbnail_url_attribute_path'] : NULL,
     ];
-    $return['source_remote_jsonapi']['alt_attribute_path'] = [
-      '#type' => 'textfield',
-      '#title' => t('Alt attribute path'),
-      '#description' => t('Enter attribute name for the alt. E.g. data->relationships->field_image->data->meta->alt'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['alt_attribute_path']) ? $settings['source_remote_jsonapi']['alt_attribute_path'] : NULL,
-    ];
+    if ('image_image' === $plugin->getPluginId()) {
+      $return['source_remote_jsonapi']['alt_attribute_path'] = [
+        '#type' => 'textfield',
+        '#title' => t('Alt attribute path'),
+        '#description' => t('Enter attribute name for the alt. E.g. data->relationships->field_image->data->meta->alt'),
+        '#default_value' => isset($settings['source_remote_jsonapi']['alt_attribute_path']) ? $settings['source_remote_jsonapi']['alt_attribute_path'] : NULL,
+      ];
+    }
     $return['source_remote_jsonapi']['title_attribute_path'] = [
       '#type' => 'textfield',
       '#title' => t('Title attribute path'),

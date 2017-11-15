@@ -41,6 +41,7 @@ class ModalBrowserForm extends FormBase {
       ->load($entity_type . '.' . $bundle . '.' . $form_mode)
       ->getComponent($field_name);
     $settings = $field_widget_settings['third_party_settings']['filefield_sources']['filefield_sources']['source_remote_jsonapi'];
+    $settings['type'] = $field_widget_settings['type'];
     if (!empty($settings['sort_option_list'])) {
       foreach (explode("\n", $settings['sort_option_list']) as $sort_option) {
         list($key, $label) = explode('|', $sort_option);
@@ -411,11 +412,15 @@ class ModalBrowserForm extends FormBase {
       '#value' => $this->t('Insert selected'),
       '#submit' => ['::insertSelectedSubmit'],
       '#ajax' => [
-        'callback' => '::ajaxInsertCallback',
+        'callback' => '::ajaxSubmitForm',
         'wrapper' => 'filefield-sources-jsonapi-browser-form',
       ],
       '#attributes' => ['class' => ['insert-button', 'visually-hidden']],
     ];
+    // On image field we have 2 step form.
+    if ('image_image' === $settings['type']) {
+      $render['top']['action']['submit']['#ajax']['callback'] = '::ajaxInsertCallback';
+    }
 
     $render['lister'] = [
       '#type' => 'container',
@@ -510,6 +515,7 @@ class ModalBrowserForm extends FormBase {
    */
   private function getApiBaseUrl($url) {
     $api_url_parsed = parse_url($url);
+
     $api_url_base = $api_url_parsed['scheme'] . '://' . $api_url_parsed['host'] . (isset($api_url_parsed['port']) ? ':' . $api_url_parsed['port'] : '');
 
     return $api_url_base;
