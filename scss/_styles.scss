@@ -54,6 +54,7 @@ div.ui-dialog .ajax-progress-throbber {
   }
   .form-item {
     margin: .75em 0;
+    width: 25%;
     @include media-min(601px) {
       margin: 1em 2em 1em 0;
     }
@@ -138,12 +139,19 @@ div.ui-dialog .ajax-progress-throbber {
 .media-lister {
   .ui-dialog & {
     background: white;
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(178px,1fr));
-    grid-row-gap: 16px;
-    grid-column-gap: 8px;
+    //display: grid;
+    //grid-template-columns: repeat(auto-fill,minmax(178px,1fr));
+    //grid-row-gap: 16px;
+    //grid-column-gap: 8px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     padding: 16px;
     position: relative;
+    justify-content: center;
+    @include media-min(601px) {
+      justify-content: flex-start;
+    }
   }
 }
 .media-row {
@@ -152,8 +160,14 @@ div.ui-dialog .ajax-progress-throbber {
     display: flex;
     align-items: center;
     flex-direction: column;
-    justify-content: space-between;
     padding: 8px;
+    width: 75%;
+    @include media-min(601px) {
+      width: 48%;
+    }
+    @include media-min(761px) {
+      width: 24%;
+    }
     &:hover {
       background: rgba(45,57,60,.07);
       border-radius: 4px;
