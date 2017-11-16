@@ -130,7 +130,7 @@ class RemoteJSONAPI extends Remote {
       $extensions = $field->getSetting('file_extensions');
       $regex = '/\.(' . preg_replace('/[ +]/', '|', preg_quote($extensions)) . ')$/i';
       if (!empty($extensions) && !preg_match($regex, $filename)) {
-        $form_state->setError($element, 'Y' . t('Only files with the following extensions are allowed: %files-allowed.', ['%files-allowed' => $extensions]));
+        $form_state->setError($element, t('Only files with the following extensions are allowed: %files-allowed.', ['%files-allowed' => $extensions]));
         return;
       }
 
