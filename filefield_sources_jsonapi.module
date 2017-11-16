@@ -61,7 +61,26 @@ function filefield_sources_jsonapi_field_process(&$element, FormStateInterface $
     if (isset($element['#value']['filefield_remote_jsonapi']['title'])) {
       $element['#value']['title'] = $element['#value']['filefield_remote_jsonapi']['title'];
     }
+    if (isset($element['#value']['filefield_remote_jsonapi']['description'])) {
+      $element['#value']['description'] = $element['#value']['filefield_remote_jsonapi']['description'];
+    }
   }
 
   return $element;
+}
+
+/**
+ * Implements hook_preprocess_HOOK().
+ *
+ * Hide JSON API source selector if base settings are not set.
+ * Remove sources TAB if only one element left.
+ */
+function filefield_sources_jsonapi_preprocess_filefield_sources_list(&$variables) {
+  $settings = $variables['element']['#filefield_sources_settings'];
+  if ($settings['sources']['remote_jsonapi'] && !isset($settings['source_remote_jsonapi']['sources'])) {
+    unset($variables['sources']['remote_jsonapi']);
+  }
+  if (count($variables['sources']) < 2) {
+    $variables['sources'] = [];
+  }
 }

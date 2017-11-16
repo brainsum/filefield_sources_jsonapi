@@ -4,12 +4,14 @@ namespace Drupal\filefield_sources_jsonapi\Plugin\FilefieldSource;
 
 use Drupal\filefield_sources\Plugin\FilefieldSource\Remote;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\File\FileSystem;
 use Drupal\field\Entity\FieldConfig;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Site\Settings;
 use Drupal\Core\Url;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Field\WidgetInterface;
+use Drupal\filefield_sources_jsonapi\Entity\FileFieldSourcesJSONAPI;
 
 /**
  * FileField source plugin to allow downloading a file from JSON Rest API.
@@ -23,8 +25,6 @@ use Drupal\Core\Field\WidgetInterface;
  */
 class RemoteJSONAPI extends Remote {
 
-  const REMOTE_JSONAPI_LISTER_ITEM_NUM = 12;
-  const REMOTE_JSONAPI_LISTER_SORT = '-created|Newest first';
   const REMOTE_JSONAPI_LISTER_MODAL_WIDTH = 1000;
   const REMOTE_JSONAPI_LISTER_MODAL_HEIGHT = 750;
 
@@ -48,7 +48,7 @@ class RemoteJSONAPI extends Remote {
 
       // Check that the destination is writable.
       $directory = $element['#upload_location'];
-      $mode = Settings::get('file_chmod_directory', FILE_CHMOD_DIRECTORY);
+      $mode = Settings::get('file_chmod_directory', FileSystem::CHMOD_DIRECTORY);
 
       // This first chmod check is for other systems such as S3, which don't
       // work with file_prepare_directory().
@@ -130,7 +130,7 @@ class RemoteJSONAPI extends Remote {
       $extensions = $field->getSetting('file_extensions');
       $regex = '/\.(' . preg_replace('/[ +]/', '|', preg_quote($extensions)) . ')$/i';
       if (!empty($extensions) && !preg_match($regex, $filename)) {
-        $form_state->setError($element, t('Only files with the following extensions are allowed: %files-allowed.', ['%files-allowed' => $extensions]));
+        $form_state->setError($element, 'Y' . t('Only files with the following extensions are allowed: %files-allowed.', ['%files-allowed' => $extensions]));
         return;
       }
 
@@ -210,14 +210,20 @@ class RemoteJSONAPI extends Remote {
       '#maxlength' => NULL,
       '#attributes' => ['class' => ['visually-hidden']],
     ];
-    if (isset($element['#alt_field'])) {
+    if (isset($element['#alt_field']) && $element['#alt_field']) {
       $element['filefield_remote_jsonapi']['alt'] = [
         '#type' => 'hidden',
         '#value' => '',
       ];
     }
-    if (isset($element['#title_field'])) {
+    if (isset($element['#title_field']) && $element['#title_field']) {
       $element['filefield_remote_jsonapi']['title'] = [
+        '#type' => 'hidden',
+        '#value' => '',
+      ];
+    }
+    if (isset($element['#description_field']) && $element['#description_field']) {
+      $element['filefield_remote_jsonapi']['description'] = [
         '#type' => 'hidden',
         '#value' => '',
       ];
@@ -261,7 +267,8 @@ class RemoteJSONAPI extends Remote {
    */
   public static function element($variables) {
     $element = $variables['element'];
-    $element['url']['#field_suffix'] = \Drupal::service('renderer')->render($element['transfer']);
+    $element['url']['#field_suffix'] = \Drupal::service('renderer')
+      ->render($element['transfer']);
 
     $width = isset($element['#filefield_sources_remote_jsonapi_settings']['modal_width']) ? $element['#filefield_sources_remote_jsonapi_settings']['modal_width'] : self::REMOTE_JSONAPI_LISTER_MODAL_WIDTH;
     $height = isset($element['#filefield_sources_remote_jsonapi_settings']['modal_height']) ? $element['#filefield_sources_remote_jsonapi_settings']['modal_height'] : self::REMOTE_JSONAPI_LISTER_MODAL_HEIGHT;
@@ -276,7 +283,10 @@ class RemoteJSONAPI extends Remote {
           'attributes' => [
             'class' => ['use-ajax'],
             'data-dialog-type' => 'modal',
-            'data-dialog-options' => Json::encode(['width' => $width, 'height' => $height]),
+            'data-dialog-options' => Json::encode([
+              'width' => $width,
+              'height' => $height,
+            ]),
           ],
         ]
       ),
@@ -285,19 +295,16 @@ class RemoteJSONAPI extends Remote {
 
     $rendered_button = \Drupal::service('renderer')->render($button);
 
-    return '<div class="filefield-source filefield-source-remote_jsonapi clear-block">' . \Drupal::service('renderer')->render($element['url']) . \Drupal::service('renderer')->render($element['alt']) . \Drupal::service('renderer')->render($element['title']) . $rendered_button . '</div>';
+    $content = \Drupal::service('renderer')->render($element['url']) . \Drupal::service('renderer')->render($element['alt']) . \Drupal::service('renderer')->render($element['title']) . \Drupal::service('renderer')->render($element['description']) . $rendered_button;
+
+    return '<div class="filefield-source filefield-source-remote_jsonapi clear-block">' . $content . '</div>';
   }
 
   /**
    * Implements hook_filefield_source_settings().
    */
   public static function settings(WidgetInterface $plugin) {
-    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources', [
-      'source_remote_jsonapi' => [
-        'api_url' => NULL,
-        'items_per_page' => self::REMOTE_JSONAPI_LISTER_ITEM_NUM,
-      ],
-    ]);
+    $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources');
 
     $return['source_remote_jsonapi'] = [
       '#title' => t('JSON Api settings'),
@@ -310,66 +317,13 @@ class RemoteJSONAPI extends Remote {
         ],
       ],
     ];
-    $return['source_remote_jsonapi']['api_url'] = [
-      '#type' => 'textfield',
-      '#title' => t('JSON Api URL'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['api_url']) ? $settings['source_remote_jsonapi']['api_url'] : NULL,
-      '#size' => 60,
-      '#maxlength' => 128,
-      '#description' => t('The JSON API Url for browser.'),
-    ];
-    $return['source_remote_jsonapi']['params'] = [
-      '#type' => 'textarea',
-      '#title' => t('Params'),
-      '#description' => t('The query parameters. Enter one per line, in the format key|value.<br />E.g.<br />include|field_image<br />fields[media--image]|name,field_category,field_image'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['params']) ? $settings['source_remote_jsonapi']['params'] : '',
-      '#rows' => 10,
-    ];
-    $return['source_remote_jsonapi']['url_attribute_path'] = [
-      '#type' => 'textfield',
-      '#title' => t('URL attribute path'),
-      '#description' => t('Enter attribute name for the file URL. E.g. data->relationships->field_image->included->attributes->url'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['url_attribute_path']) ? $settings['source_remote_jsonapi']['url_attribute_path'] : NULL,
-    ];
-    $return['source_remote_jsonapi']['thumbnail_url_attribute_path'] = [
-      '#type' => 'textfield',
-      '#title' => t('Thumbnail URL attribute path'),
-      '#description' => t('Enter attribute name for the thumbnail file URL. E.g. data->relationships->field_image->included->attributes->thumbnail_url'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['thumbnail_url_attribute_path']) ? $settings['source_remote_jsonapi']['thumbnail_url_attribute_path'] : NULL,
-    ];
-    if ('image_image' === $plugin->getPluginId()) {
-      $return['source_remote_jsonapi']['alt_attribute_path'] = [
-        '#type' => 'textfield',
-        '#title' => t('Alt attribute path'),
-        '#description' => t('Enter attribute name for the alt. E.g. data->relationships->field_image->data->meta->alt'),
-        '#default_value' => isset($settings['source_remote_jsonapi']['alt_attribute_path']) ? $settings['source_remote_jsonapi']['alt_attribute_path'] : NULL,
-      ];
-    }
-    $return['source_remote_jsonapi']['title_attribute_path'] = [
-      '#type' => 'textfield',
-      '#title' => t('Title attribute path'),
-      '#description' => t('Enter attribute name for the title. E.g. data->field_image->data->meta->title'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['title_attribute_path']) ? $settings['source_remote_jsonapi']['title_attribute_path'] : NULL,
-    ];
-    $return['source_remote_jsonapi']['sort_option_list'] = [
-      '#type' => 'textarea',
-      '#title' => t('Sorting option list'),
-      '#description' => t('The possible values for sorting. Enter one value per line, in the format key|label. The first value will be the default. Selector will be displeyed only if you enter more than one.<br />E.g.<br />-created|Newest first<br />name|Name'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['sort_option_list']) ? $settings['source_remote_jsonapi']['sort_option_list'] : self::REMOTE_JSONAPI_LISTER_SORT,
-      '#rows' => 5,
-    ];
-    $return['source_remote_jsonapi']['search_filter'] = [
-      '#type' => 'textfield',
-      '#title' => t('Search filter attribute name'),
-      '#description' => t('Enter attribute name for search field. On empty, the search filter will not be active. Multiple fields can be added separated with comma. E.g.: filename,field_category'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['search_filter']) ? $settings['source_remote_jsonapi']['search_filter'] : '',
-    ];
-    $return['source_remote_jsonapi']['items_per_page'] = [
-      '#type' => 'number',
-      '#min' => 1,
-      '#title' => t('Items to display'),
-      '#description' => t('Number of items per page for browser.'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['items_per_page']) ? $settings['source_remote_jsonapi']['items_per_page'] : self::REMOTE_JSONAPI_LISTER_ITEM_NUM,
+    $return['source_remote_jsonapi']['sources'] = [
+      '#type' => 'checkboxes',
+      '#options' => FileFieldSourcesJSONAPI::getSettingsOptionList(),
+      '#title' => t('JSON API settings'),
+      '#description' => t('Defined JSON API settings at <a href=":url">manage JSON API sources</a> page.', [':url' => Url::fromRoute('entity.filefield_sources_jsonapi.collection')->toString()]),
+      '#default_value' => isset($settings['source_remote_jsonapi']['sources']) ? $settings['source_remote_jsonapi']['sources'] : NULL,
+      '#required' => TRUE,
     ];
     $return['source_remote_jsonapi']['modal_width'] = [
       '#type' => 'number',

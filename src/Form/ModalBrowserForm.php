@@ -3,6 +3,7 @@
 namespace Drupal\filefield_sources_jsonapi\Form;
 
 use Drupal\Component\Utility\UrlHelper;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\CloseModalDialogCommand;
 use Drupal\Core\Ajax\HtmlCommand;
@@ -10,6 +11,7 @@ use Drupal\Core\Ajax\InvokeCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\Entity\FieldStorageConfig;
+use Drupal\filefield_sources_jsonapi\Entity\FileFieldSourcesJSONAPI;
 use GuzzleHttp\Client;
 
 /**
@@ -28,48 +30,67 @@ class ModalBrowserForm extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $form_mode = NULL, $field_name = NULL) {
+    static $settings;
+
     $form['#attached']['library'][] = 'filefield_sources_jsonapi/modal';
     $form['#prefix'] = '<div id="filefield-sources-jsonapi-browser-form">';
     $form['#suffix'] = '</div>';
 
-    if ($form_state->get('fetched_image') && $form_state->get('form_type') === 'insert') {
+    if ($form_state->get('fetched_file') && $form_state->get('form_type') === 'insert') {
       return self::buildInsertForm($form, $form_state);
     }
 
+    $user_input = $form_state->getUserInput();
     $field_widget_settings = \Drupal::entityTypeManager()
       ->getStorage('entity_form_display')
       ->load($entity_type . '.' . $bundle . '.' . $form_mode)
       ->getComponent($field_name);
-    $settings = $field_widget_settings['third_party_settings']['filefield_sources']['filefield_sources']['source_remote_jsonapi'];
-    $settings['type'] = $field_widget_settings['type'];
-    if (!empty($settings['sort_option_list'])) {
-      foreach (explode("\n", $settings['sort_option_list']) as $sort_option) {
-        list($key, $label) = explode('|', $sort_option);
-        $settings['sort_options'][$key] = $label;
-      }
+
+    if (!$settings) {
+      $settings = $field_widget_settings['third_party_settings']['filefield_sources']['filefield_sources']['source_remote_jsonapi'];
     }
+    $settings['sources'] = FileFieldSourcesJSONAPI::getSettingsOptionList($settings['sources']);
+    $settings['field_name'] = $field_name;
+
+    $settings['type'] = $field_widget_settings['type'];
     $settings['cardinality'] = FieldStorageConfig::loadByName($entity_type, $field_name)
       ->getCardinality();
     $field_settings = \Drupal::getContainer()->get('entity_field.manager')->getFieldDefinitions($entity_type, $bundle)[$field_name]->getSettings();
     $settings['field_settings'] = $field_settings;
 
+    $actual_config = NULL;
+    if (isset($user_input['type'])) {
+      $actual_config = FileFieldSourcesJSONAPI::load($user_input['type']);
+    }
+    if (!$actual_config) {
+      $actual_config_id = array_keys($settings['sources'])[0];
+      $actual_config = FileFieldSourcesJSONAPI::load($actual_config_id);
+    }
+
+    if ($sort_option_list = $actual_config->getSortOptionList()) {
+      foreach (explode("\n", $sort_option_list) as $sort_option) {
+        list($key, $label) = explode('|', $sort_option);
+        $settings['sort_options'][$key] = $label;
+      }
+    }
+
+    $settings['actual_config'] = $actual_config;
     $form_state->set('jsonapi_settings', $settings);
 
-    $rest_api_url = $settings['api_url'];
-    $query = $this->bulidJsonApiQuery($settings);
+    $rest_api_url = $actual_config->getApiUrl();
+    $query = $this->bulidJsonApiQuery($actual_config);
 
     $page = $form_state->get('page');
     if ($page === NULL) {
       $form_state->set('page', 0);
       $page = 0;
     }
-    $query['page[limit]'] = $settings['items_per_page'];
+    $query['page[limit]'] = $actual_config->getItemsPerPage();
     $query['page[offset]'] = $page * $query['page[limit]'];
 
     // Add browser form data to JSON API query.
-    $user_input = $form_state->getUserInput();
-    if (!empty($settings['search_filter']) && isset($user_input['name']) && !empty($user_input['name'])) {
-      if ($field_paths = explode(',', $settings['search_filter'])) {
+    if (!empty($actual_config->getSearchFilter()) && isset($user_input['name']) && !empty($user_input['name'])) {
+      if ($field_paths = explode(',', $actual_config->getSearchFilter())) {
         $query['filter[or-group][group][conjunction]'] = 'OR';
         foreach ($field_paths as $delta => $field_path) {
           $filterName = 'filter-' . $delta;
@@ -80,7 +101,7 @@ class ModalBrowserForm extends FormBase {
         }
       }
       else {
-        $query['filter[nameFilter][condition][path]'] = $settings['search_filter'];
+        $query['filter[nameFilter][condition][path]'] = $actual_config->getSearchFilter();
         $query['filter[nameFilter][condition][operator]'] = 'CONTAINS';
         $query['filter[nameFilter][condition][value]'] = $user_input['name'];
       }
@@ -119,7 +140,7 @@ class ModalBrowserForm extends FormBase {
    *   The render array defining the elements of the form.
    */
   public function buildInsertForm(array &$form, FormStateInterface $form_state) {
-    $image = $form_state->get('fetched_image');
+    $file = $form_state->get('fetched_file');
     $settings = $form_state->get('jsonapi_settings');
     $form['title'] = [
       '#type' => 'item',
@@ -132,27 +153,34 @@ class ModalBrowserForm extends FormBase {
     ];
     $form['wrapper']['image'] = [
       '#theme' => 'image',
-      '#uri' => $image['url'],
+      '#uri' => $file['thumbnail_url'],
       '#width' => '400',
     ];
     $form['wrapper']['detail'] = [
       '#type' => 'container',
       '#attributes' => ['class' => ['details-wrapper']],
     ];
-    if ($settings['field_settings']['title_field']) {
+    if (isset($settings['field_settings']['title_field']) && $settings['field_settings']['title_field']) {
       $form['wrapper']['detail']['title'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Title'),
-        '#default_value' => $image['title'],
+        '#default_value' => $file['title'],
         '#required' => $settings['field_settings']['title_field_required'] ? TRUE : FALSE,
       ];
     }
-    if ($settings['field_settings']['alt_field']) {
+    if (isset($settings['field_settings']['alt_field']) && $settings['field_settings']['alt_field']) {
       $form['wrapper']['detail']['alt'] = [
         '#type' => 'textfield',
         '#title' => $this->t('Alt'),
-        '#default_value' => $image['alt'],
+        '#default_value' => $file['alt'],
         '#required' => $settings['field_settings']['alt_field_required'] ? TRUE : FALSE,
+      ];
+    }
+    if (isset($settings['field_settings']['description_field']) && $settings['field_settings']['description_field']) {
+      $form['wrapper']['detail']['description'] = [
+        '#type' => 'textfield',
+        '#title' => $this->t('Description'),
+        '#default_value' => $file['title'],
       ];
     }
 
@@ -222,37 +250,44 @@ class ModalBrowserForm extends FormBase {
     if ($form_state->getTriggeringElement()['#name'] === 'insert_selected') {
       $selected_media = array_values(array_filter($form_state->getUserInput()['media_id_select']));
 
-      $image = NULL;
+      $file = NULL;
       if ($media_id = $selected_media[0]) {
         $settings = $form_state->get('jsonapi_settings');
 
-        $rest_api_url = $settings['api_url'] . '/' . $media_id;
-        $query = $this->bulidJsonApiQuery($settings);
+        $rest_api_url = $settings['actual_config']->getApiUrl() . '/' . $media_id;
+        $query = $this->bulidJsonApiQuery($settings['actual_config']);
         $query_str = UrlHelper::buildQuery($query);
         $rest_api_url = $rest_api_url . '?' . $query_str;
 
         $response = $this->getJsonApiCall($rest_api_url);
         if (200 === $response->getStatusCode()) {
           $response = json_decode($response->getBody());
-          $api_url_base = $this->getApiBaseUrl($settings['api_url']);
-          $image['url'] = $this->getJsonApiDatabyPath($response, $settings['url_attribute_path']);
-          $image['url'] = $api_url_base . $image['url'];
-          if (!empty($settings['alt_attribute_path'])) {
-            $image['alt'] = $this->getJsonApiDatabyPath($response, $settings['alt_attribute_path']);
+          $api_url_base = $this->getApiBaseUrl($settings['actual_config']->getApiUrl());
+          $file['url'] = $this->getJsonApiDatabyPath($response, $settings['actual_config']->getUrlAttributePath());
+          $file['url'] = $api_url_base . $file['url'];
+          if ('image_image' === $settings['type']) {
+            $file['thumbnail_url'] = $file['url'];
           }
-          if (!empty($settings['title_attribute_path'])) {
-            $image['title'] = $this->getJsonApiDatabyPath($response, $settings['title_attribute_path']);
+          else {
+            $file['thumbnail_url'] = $this->getJsonApiDatabyPath($response, $settings['actual_config']->getThumbnailUrlAttributePath());
+            $file['thumbnail_url'] = $api_url_base . $file['thumbnail_url'];
+          }
+          if ($alt_attribute_path = $settings['actual_config']->getAltAttributePath()) {
+            $file['alt'] = $this->getJsonApiDatabyPath($response, $alt_attribute_path);
+          }
+          if ($title_attribute_path = $settings['actual_config']->getTitleAttributePath()) {
+            $file['title'] = $this->getJsonApiDatabyPath($response, $title_attribute_path);
           }
         }
 
-        if (!isset($image['url']) || !curl_init($image['url'])) {
-          $form_state->setErrorByName('', $this->t("Can't fetch image from remote server."));
-          $this->getLogger('filefield_sources_jsonapi')->warning("Can't fetch image (@url) from remote server.", ['@url' => $image['url']]);
+        if (!isset($file['url']) || !curl_init($file['url'])) {
+          $form_state->setErrorByName('', $this->t("Can't fetch file from remote server."));
+          $this->getLogger('filefield_sources_jsonapi')->warning("Can't fetch file (@url) from remote server.", ['@url' => $file['url']]);
         }
-        $form_state->set('fetched_image', $image);
+        $form_state->set('fetched_file', $file);
       }
       else {
-        $form_state->setErrorByName('', $this->t("No image was selected."));
+        $form_state->setErrorByName('', $this->t("No file was selected."));
       }
     }
   }
@@ -327,11 +362,21 @@ class ModalBrowserForm extends FormBase {
       $response->addCommand(new HtmlCommand('#filefield-sources-jsonapi-browser-form', $form));
     }
     else {
-      $image = $form_state->get('fetched_image');
-      $response->addCommand(new InvokeCommand(".filefield-source-remote_jsonapi input[name$='[filefield_remote_jsonapi][url]']", 'val', [$image['url']]));
-      $response->addCommand(new InvokeCommand(".filefield-source-remote_jsonapi input[name$='[filefield_remote_jsonapi][alt]']", 'val', [$form_state->getUserInput()['alt']]));
-      $response->addCommand(new InvokeCommand(".filefield-source-remote_jsonapi input[name$='[filefield_remote_jsonapi][title]']", 'val', [$form_state->getUserInput()['title']]));
-      $response->addCommand(new InvokeCommand('.filefield-source-remote_jsonapi input[type=submit]', 'mousedown'));
+      $user_input = $form_state->getUserInput();
+      $settings = $form_state->get('jsonapi_settings');
+      $selector = '.field--name-' . Html::getClass($settings['field_name']) . " .filefield-source-remote_jsonapi";
+      $file = $form_state->get('fetched_file');
+      $response->addCommand(new InvokeCommand($selector . " input[name$='[filefield_remote_jsonapi][url]']", 'val', [$file['url']]));
+      if (isset($user_input['alt'])) {
+        $response->addCommand(new InvokeCommand($selector . " input[name$='[filefield_remote_jsonapi][alt]']", 'val', [$user_input['alt']]));
+      }
+      if (isset($user_input['title'])) {
+        $response->addCommand(new InvokeCommand($selector . " input[name$='[filefield_remote_jsonapi][title]']", 'val', [$user_input['title']]));
+      }
+      if (isset($user_input['description'])) {
+        $response->addCommand(new InvokeCommand($selector . " input[name$='[filefield_remote_jsonapi][description]']", 'val', [$user_input['description']]));
+      }
+      $response->addCommand(new InvokeCommand($selector . " input[type=submit]", 'mousedown'));
       $response->addCommand(new CloseModalDialogCommand());
     }
     return $response;
@@ -342,7 +387,8 @@ class ModalBrowserForm extends FormBase {
    */
   private function renderFormElements($response, FormStateInterface $form_state) {
     $settings = $form_state->get('jsonapi_settings');
-    $api_url_base = $this->getApiBaseUrl($settings['api_url']);
+    $actual_config = $settings['actual_config'];
+    $api_url_base = $this->getApiBaseUrl($actual_config->getApiUrl());
 
     $render = [];
     $render['top'] = [
@@ -352,7 +398,7 @@ class ModalBrowserForm extends FormBase {
         'class' => ['browser-top'],
       ],
     ];
-    if ((!empty($settings['sort_options']) && count($settings['sort_options']) > 1) || !empty($settings['search_filter'])) {
+    if (count($settings['sources']) > 1 || (!empty($settings['sort_options']) && count($settings['sort_options']) > 1) || !empty($settings['search_filter'])) {
       $render['top']['filter'] = [
         '#type' => 'container',
         '#attributes' => [
@@ -360,6 +406,19 @@ class ModalBrowserForm extends FormBase {
           'class' => ['browser-filter', 'inline'],
         ],
       ];
+      if (count($settings['sources']) > 1) {
+        $render['top']['filter']['type'] = [
+          '#title' => $this->t('Type'),
+          '#type' => 'select',
+          '#options' => $settings['sources'],
+          '#attributes' => ['class' => ['type', 'inline']],
+          '#submit' => ['::ajaxSubmitFilterForm'],
+          '#ajax' => [
+            'callback' => '::ajaxPagerCallback',
+            'wrapper' => 'filefield_filesources_jsonapi_lister',
+          ],
+        ];
+      }
       if (!empty($settings['sort_options'])) {
         $render['top']['filter']['sort'] = [
           '#title' => $this->t('Sort'),
@@ -417,8 +476,9 @@ class ModalBrowserForm extends FormBase {
       ],
       '#attributes' => ['class' => ['insert-button', 'visually-hidden']],
     ];
-    // On image field we have 2 step form.
-    if ('image_image' === $settings['type']) {
+    // Navigate to 2nd step if there are alt/title/description field enabled.
+    if (('image_image' === $settings['type'] && ($settings['field_settings']['alt_field'] || $settings['field_settings']['title_field']))
+      || (isset($settings['field_settings']['description_field']) && $settings['field_settings']['description_field'])) {
       $render['top']['action']['submit']['#ajax']['callback'] = '::ajaxInsertCallback';
     }
 
@@ -435,7 +495,7 @@ class ModalBrowserForm extends FormBase {
     ];
     foreach ($response->data as $data) {
       $media_id = $data->id;
-      $thumbnail_url_attribute_path = $settings['thumbnail_url_attribute_path'] ?: $settings['url_attribute_path'];
+      $thumbnail_url_attribute_path = $actual_config->getThumbnailUrlAttributePath() ?: $actual_config->getUrlAttributePath();
       $thumbnail_url = $this->getJsonApiDatabyPath($response, $thumbnail_url_attribute_path, $data);
       if ($media_id && $thumbnail_url) {
         $render['lister']['media'][$media_id] = [
@@ -470,7 +530,7 @@ class ModalBrowserForm extends FormBase {
           '#checkbox' => $checkbox,
           '#checkbox_id' => $media_id,
           '#img' => $img,
-          '#title' => $this->getJsonApiDatabyPath($response, $settings['title_attribute_path'], $data),
+          '#title' => $this->getJsonApiDatabyPath($response, $actual_config->getTitleAttributePath(), $data),
         ];
       }
     }
@@ -524,12 +584,12 @@ class ModalBrowserForm extends FormBase {
   /**
    * Build JSON API query based on settings.
    */
-  private function bulidJsonApiQuery($settings) {
+  private function bulidJsonApiQuery($config) {
     $query['format'] = 'api_json';
 
-    foreach (explode("\n", $settings['params']) as $param) {
+    foreach (explode("\n", $config->getParams()) as $param) {
       list($key, $value) = explode('|', $param);
-      $query[$key] = $value;
+      $query[$key] = trim($value);
     }
     return $query;
   }
@@ -588,7 +648,12 @@ class ModalBrowserForm extends FormBase {
       $included_path = NULL;
     }
     foreach (explode('->', $data_path) as $property) {
-      $attribute_data = $attribute_data->{$property};
+      if ($property) {
+        $attribute_data = $attribute_data->{$property};
+      }
+      else {
+        $attribute_data = NULL;
+      }
     }
     if (!empty($included_path)) {
       foreach ($response->included as $included) {
