@@ -162,6 +162,7 @@ div.ui-dialog .ajax-progress-throbber {
     flex-direction: column;
     padding: 8px;
     width: 75%;
+    box-sizing: border-box;
     @include media-min(601px) {
       width: 48%;
     }
