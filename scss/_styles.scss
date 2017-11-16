@@ -249,6 +249,7 @@ div.ui-dialog .ajax-progress-throbber {
       flex: 1;
       min-height: 178px;
       justify-content: center;
+      pointer-events: none;
     }
     img {
       //width: 100%;
