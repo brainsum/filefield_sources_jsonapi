@@ -218,6 +218,7 @@ div.ui-dialog .ajax-progress-throbber {
       flex-direction: column;
       justify-content: space-between;
       cursor: pointer;
+      min-height: 224px;
       .image {
         position: relative;
         &:before {
@@ -245,6 +246,8 @@ div.ui-dialog .ajax-progress-throbber {
       align-items: center;
       display: flex;
       flex: 1;
+      min-height: 178px;
+      justify-content: center;
     }
     img {
       //width: 100%;
@@ -267,6 +270,7 @@ div.ui-dialog .ajax-progress-throbber {
       text-overflow: ellipsis;
       max-width: 150px;
       text-align: center;
+      min-height: 28px;
     }
   }
 }
