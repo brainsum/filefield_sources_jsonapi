@@ -84,3 +84,22 @@ function filefield_sources_jsonapi_preprocess_filefield_sources_list(&$variables
     $variables['sources'] = [];
   }
 }
+
+/**
+ * Implements hook_page_attachments().
+ *
+ * Add ie=edge meta to html head on node add, node edit pages.
+ */
+function filefield_sources_jsonapi_page_attachments(array &$page) {
+  $route_name = Drupal::request()->attributes->get('_route');
+  if (in_array($route_name, ['entity.node.edit_form', 'node.add'])) {
+    $xuacompatible = [
+      '#tag' => 'meta',
+      '#attributes' => [
+        'http-equiv' => 'x-ua-compatible',
+        'content' => 'ie=edge',
+      ],
+    ];
+    $page['#attached']['html_head'][] = [$xuacompatible, 'x-ua-compatible'];
+  }
+}
