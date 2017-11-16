@@ -179,7 +179,8 @@ div.ui-dialog .ajax-progress-throbber {
       border-radius: 4px;
     }
     .form-checkbox {
-      visibility: hidden;
+      //visibility: hidden;
+      display: none;
     }
     // BEGIN fixes for Eleven admin theme
     .form-item--checkbox {
