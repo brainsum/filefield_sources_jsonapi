@@ -589,7 +589,13 @@ class ModalBrowserForm extends FormBase {
 
     foreach (explode("\n", $config->getParams()) as $param) {
       list($key, $value) = explode('|', $param);
-      $query[$key] = trim($value);
+      if (preg_match('/(.*)\[\]$/', $key, $matches)) {
+        $key = $matches[1];
+        $query[$key][] = trim($value);
+      }
+      else {
+        $query[$key] = trim($value);
+      }
     }
     return $query;
   }
