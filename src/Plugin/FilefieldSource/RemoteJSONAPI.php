@@ -12,6 +12,7 @@ use Drupal\Core\Url;
 use Drupal\Component\Serialization\Json;
 use Drupal\Core\Field\WidgetInterface;
 use Drupal\filefield_sources_jsonapi\Entity\FileFieldSourcesJSONAPI;
+use Drupal\image\Entity\ImageStyle;
 
 /**
  * FileField source plugin to allow downloading a file from JSON Rest API.
@@ -172,6 +173,16 @@ class RemoteJSONAPI extends Remote {
         $transfer_success = curl_exec($ch);
         curl_close($ch);
       }
+
+      // Transform image before saving it.
+      $image_factory = \Drupal::service('image.factory');
+      $image = $image_factory->get($filepath);
+      $image_style = isset($element['#filefield_sources_settings']['source_remote_jsonapi']['image_style']) ? $element['#filefield_sources_settings']['source_remote_jsonapi']['image_style'] : NULL;
+      if ($image->isValid() && $image_style) {
+        $style = ImageStyle::load($image_style);
+        $style->createDerivative($filepath, $filepath);
+      }
+
       if ($transfer_success && $file = filefield_sources_save_file($filepath, $element['#upload_validators'], $element['#upload_location'])) {
         if (!in_array($file->id(), $input['fids'])) {
           $input['fids'][] = $file->id();
@@ -187,6 +198,9 @@ class RemoteJSONAPI extends Remote {
    * {@inheritdoc}
    */
   public static function process(array &$element, FormStateInterface $form_state, array &$complete_form) {
+    if (!isset($element['#filefield_sources_settings']['source_remote_jsonapi']['sources'])) {
+      return $element;
+    }
     $routing_params = [
       'entity_type' => $element['#entity_type'],
       'bundle' => $element['#bundle'],
@@ -324,6 +338,13 @@ class RemoteJSONAPI extends Remote {
       '#description' => t('Defined JSON API settings at <a href=":url">manage JSON API sources</a> page.', [':url' => Url::fromRoute('entity.filefield_sources_jsonapi.collection')->toString()]),
       '#default_value' => isset($settings['source_remote_jsonapi']['sources']) ? $settings['source_remote_jsonapi']['sources'] : NULL,
       '#required' => TRUE,
+    ];
+    $return['source_remote_jsonapi']['image_style'] = [
+      '#type' => 'select',
+      '#title' => t('Image style'),
+      '#options' => image_style_options(),
+      '#description' => t('Transform image file before save.'),
+      '#default_value' => isset($settings['source_remote_jsonapi']['image_style']) ? $settings['source_remote_jsonapi']['image_style'] : NULL,
     ];
     $return['source_remote_jsonapi']['modal_width'] = [
       '#type' => 'number',
