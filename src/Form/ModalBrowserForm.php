@@ -58,7 +58,7 @@ class ModalBrowserForm extends FormBase {
     $field_settings = \Drupal::getContainer()->get('entity_field.manager')->getFieldDefinitions($entity_type, $bundle)[$field_name]->getSettings();
     $settings['field_settings'] = $field_settings;
 
-    $actual_config = NULL;
+    $actual_config = isset($settings['actual_config']) ? $settings['actual_config'] : NULL;
     if (isset($user_input['type'])) {
       $actual_config = FileFieldSourcesJSONAPI::load($user_input['type']);
     }
