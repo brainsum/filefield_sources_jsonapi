@@ -17,7 +17,10 @@ Defines 'JSON API remote URL' file field source.
       $config['filefield_sources_jsonapi']['username'] = 'USERNAME';
       $config['filefield_sources_jsonapi']['password'] = 'PASSWORD';
       
-## Widget settings
+## Manage JSON API settings
+Configuration » Web services » JSON API file field sources
+- Label/machine name
+  - Label for the JSON API file field sources - selectable at field widget settings.
 - JSON Api URL
    - request URL, e.g. example.com/jsonapi/media/image
 - Params
@@ -31,13 +34,22 @@ Defines 'JSON API remote URL' file field source.
   - If alt field is enabled on the image field, this value will be set as
   default value after selection.
 - Title attribute path
-  - Displayed in the lister under image. If title field is enabled on the image
-  field, this value will be set as default value after selection.
+  - Displayed in the lister under image.
+  - Image field: if title field is enabled, this value will be set as default
+  value after selection.
+  - File field: ff description field is enabled, this value will be set as
+  default value after selection.
 - Sorting option list
   - Option list per line in key|label format.
 - Search filter attribute name
 - Items to display
   - Item number per page.
+
+## Widget settings
+- JSON API settings
+  - enable defined JSON API settings/sources.
+- Image style
+  - Transform remote images to selected image style before saving it.
 - Modal window width
   - Modal window initial width.
 - Modal window height
@@ -66,6 +78,7 @@ request params:
       data->relationships->field_image->included->attributes->filename
 
 ## Examples
+
 #### 1. Getting files from media image entities, field_image field
 
 We have media image entities ('image' bundle). Image (file) is stored in
@@ -129,8 +142,14 @@ Multiple fields are grouped with 'OR' conjunction.
 
 #### 5. Thumbnail in browser
 It's better to use thumbnail size in lister instead of rendering original
-images - could be unnecessary big for listing (slower rendering = worse UX). To
-provide custom URL for thumbnail you need develop on JSON server side. One
+images - could be unnecessary big for listing (slower rendering = worse UX).
+
+##### 5.1. Thumbnail in browser - solution #1
+You can use Consumer Image Styles module.
+https://www.drupal.org/project/consumer_image_styles
+
+##### 5.2. Thumbnail in browser - solution #2
+To provide custom URL for thumbnail you need develop on JSON server side. One
 possible solution is to add thumbnail_url computed field for every file entities
 of image type via hook_entity_base_field_info() in your custom module - based on
 json_api's 'Download URL' defined with jsonapi_entity_base_field_info():
