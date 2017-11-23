@@ -462,7 +462,7 @@ class ModalBrowserForm extends FormBase {
       }
     }
 
-    // If cardinality is 1, don't render submit button - autosubmit on slelect.
+    // If cardinality is 1, don't render submit button - autosubmit on select.
     $render['top']['action'] = [
       '#type' => 'container',
       '#attributes' => [
