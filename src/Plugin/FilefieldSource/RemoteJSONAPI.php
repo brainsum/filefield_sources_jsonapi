@@ -135,16 +135,6 @@ class RemoteJSONAPI extends Remote {
         return;
       }
 
-      // Check file size based off of header information.
-      if (!empty($element['#upload_validators']['file_validate_size'][0])) {
-        $max_size = $element['#upload_validators']['file_validate_size'][0];
-        $file_size = $info['download_content_length'];
-        if ($file_size > $max_size) {
-          $form_state->setError($element, t('The remote file is %filesize exceeding the maximum file size of %maxsize.', ['%filesize' => format_size($file_size), '%maxsize' => format_size($max_size)]));
-          return;
-        }
-      }
-
       // Set progress bar information.
       $options = [
         'key' => $element['#entity_type'] . '_' . $element['#bundle'] . '_' . $element['#field_name'] . '_' . $element['#delta'],
@@ -174,13 +164,26 @@ class RemoteJSONAPI extends Remote {
         curl_close($ch);
       }
 
+      $file_size = $info['download_content_length'];
+
       // Transform image before saving it.
       $image_factory = \Drupal::service('image.factory');
       $image = $image_factory->get($filepath);
       $image_style = isset($element['#filefield_sources_settings']['source_remote_jsonapi']['image_style']) ? $element['#filefield_sources_settings']['source_remote_jsonapi']['image_style'] : NULL;
       if ($image->isValid() && $image_style) {
         $style = ImageStyle::load($image_style);
-        $style->createDerivative($filepath, $filepath);
+        if ($style->createDerivative($filepath, $filepath)) {
+          $file_size = filesize($filepath);
+        }
+      }
+
+      // Check file size based off of header information.
+      if (!empty($element['#upload_validators']['file_validate_size'][0])) {
+        $max_size = $element['#upload_validators']['file_validate_size'][0];
+        if ($file_size > $max_size) {
+          $form_state->setError($element, t('The remote file is %filesize exceeding the maximum file size of %maxsize.', ['%filesize' => format_size($file_size), '%maxsize' => format_size($max_size)]));
+          return;
+        }
       }
 
       if ($transfer_success && $file = filefield_sources_save_file($filepath, $element['#upload_validators'], $element['#upload_location'])) {
