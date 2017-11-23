@@ -53,6 +53,11 @@ class ModalBrowserForm extends FormBase {
     $settings['field_name'] = $field_name;
 
     $settings['type'] = $field_widget_settings['type'];
+    // @todo, refactor.
+    if ('image_widget_crop' === $settings['type']) {
+      $settings['type'] = 'image_image';
+    }
+
     $settings['cardinality'] = FieldStorageConfig::loadByName($entity_type, $field_name)
       ->getCardinality();
     $field_settings = \Drupal::getContainer()->get('entity_field.manager')->getFieldDefinitions($entity_type, $bundle)[$field_name]->getSettings();
