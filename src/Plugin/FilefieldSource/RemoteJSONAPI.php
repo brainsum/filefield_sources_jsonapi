@@ -13,6 +13,7 @@ use Drupal\Component\Serialization\Json;
 use Drupal\Core\Field\WidgetInterface;
 use Drupal\filefield_sources_jsonapi\Entity\FileFieldSourcesJSONAPI;
 use Drupal\image\Entity\ImageStyle;
+use Drupal\Component\Utility\NestedArray;
 
 /**
  * FileField source plugin to allow downloading a file from JSON Rest API.
@@ -322,6 +323,7 @@ class RemoteJSONAPI extends Remote {
    */
   public static function settings(WidgetInterface $plugin) {
     $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources');
+    $field_name = 'parade_background';
 
     $return['source_remote_jsonapi'] = [
       '#title' => t('JSON Api settings'),
@@ -330,7 +332,7 @@ class RemoteJSONAPI extends Remote {
       '#weight' => 10,
       '#states' => [
         'visible' => [
-          ':input[name="fields[field_file_image][settings_edit_form][third_party_settings][filefield_sources][filefield_sources][sources][remote_jsonapi]"]' => ['checked' => TRUE],
+          ':input[name="fields[' . $field_name . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources][sources][remote_jsonapi]"]' => ['checked' => TRUE],
         ],
       ],
     ];
@@ -340,7 +342,7 @@ class RemoteJSONAPI extends Remote {
       '#title' => t('JSON API settings'),
       '#description' => t('Defined JSON API settings at <a href=":url">manage JSON API sources</a> page.', [':url' => Url::fromRoute('entity.filefield_sources_jsonapi.collection')->toString()]),
       '#default_value' => isset($settings['source_remote_jsonapi']['sources']) ? $settings['source_remote_jsonapi']['sources'] : NULL,
-      '#required' => TRUE,
+      '#element_validate' => [[get_called_class(), 'jsoanApiSourceValidateRequired']],
     ];
     $return['source_remote_jsonapi']['image_style'] = [
       '#type' => 'select',
@@ -365,6 +367,18 @@ class RemoteJSONAPI extends Remote {
     ];
 
     return $return;
+  }
+
+  /**
+   * Custom validation for JSON API source.
+   */
+  public function jsoanApiSourceValidateRequired($element, FormStateInterface $form_state) {
+    // Go 2 levels up.
+    $parents = array_slice($element['#parents'], 0, count($element['#parents']) - 2, TRUE);
+    $input = NestedArray::getValue($form_state->getValues(), $parents);
+    if ($input['sources']['remote_jsonapi'] && empty(array_filter($input['source_remote_jsonapi']['sources']))) {
+      $form_state->setError($element, 'JSON API settings are required.');
+    }
   }
 
 }
