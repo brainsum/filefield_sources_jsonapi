@@ -323,18 +323,12 @@ class RemoteJSONAPI extends Remote {
    */
   public static function settings(WidgetInterface $plugin) {
     $settings = $plugin->getThirdPartySetting('filefield_sources', 'filefield_sources');
-    $field_name = 'parade_background';
 
     $return['source_remote_jsonapi'] = [
       '#title' => t('JSON Api settings'),
       '#type' => 'details',
       '#description' => t('Enable JSON API browser'),
       '#weight' => 10,
-      '#states' => [
-        'visible' => [
-          ':input[name="fields[' . $field_name . '][settings_edit_form][third_party_settings][filefield_sources][filefield_sources][sources][remote_jsonapi]"]' => ['checked' => TRUE],
-        ],
-      ],
     ];
     $return['source_remote_jsonapi']['sources'] = [
       '#type' => 'checkboxes',
