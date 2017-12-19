@@ -28,7 +28,6 @@ use Drupal\Component\Utility\NestedArray;
 class RemoteJSONAPI extends Remote {
 
   const REMOTE_JSONAPI_LISTER_MODAL_WIDTH = 1000;
-  const REMOTE_JSONAPI_LISTER_MODAL_HEIGHT = 750;
 
   /**
    * {@inheritdoc}
@@ -289,7 +288,6 @@ class RemoteJSONAPI extends Remote {
       ->render($element['transfer']);
 
     $width = isset($element['#filefield_sources_remote_jsonapi_settings']['modal_width']) ? $element['#filefield_sources_remote_jsonapi_settings']['modal_width'] : self::REMOTE_JSONAPI_LISTER_MODAL_WIDTH;
-    $height = isset($element['#filefield_sources_remote_jsonapi_settings']['modal_height']) ? $element['#filefield_sources_remote_jsonapi_settings']['modal_height'] : self::REMOTE_JSONAPI_LISTER_MODAL_HEIGHT;
 
     $button = [
       '#type' => 'link',
@@ -303,7 +301,6 @@ class RemoteJSONAPI extends Remote {
             'data-dialog-type' => 'modal',
             'data-dialog-options' => Json::encode([
               'width' => $width,
-              'height' => $height,
             ]),
           ],
         ]
@@ -351,13 +348,6 @@ class RemoteJSONAPI extends Remote {
       '#title' => t('Modal window width'),
       '#description' => t('Modal window initial width.'),
       '#default_value' => isset($settings['source_remote_jsonapi']['modal_width']) ? $settings['source_remote_jsonapi']['modal_width'] : self::REMOTE_JSONAPI_LISTER_MODAL_WIDTH,
-    ];
-    $return['source_remote_jsonapi']['modal_height'] = [
-      '#type' => 'number',
-      '#min' => 200,
-      '#title' => t('Modal window height'),
-      '#description' => t('Modal window initial height.'),
-      '#default_value' => isset($settings['source_remote_jsonapi']['modal_height']) ? $settings['source_remote_jsonapi']['modal_height'] : self::REMOTE_JSONAPI_LISTER_MODAL_HEIGHT,
     ];
 
     return $return;

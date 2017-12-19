@@ -52,8 +52,6 @@ Configuration » Web services » JSON API file field sources
   - Transform remote images to selected image style before saving it.
 - Modal window width
   - Modal window initial width.
-- Modal window height
-  - Modal window initial height.
   
 ## Info, requirements
 - URLs (URL, Thumbnail URL) must be relative to the remote server, shouldn't
