@@ -59,6 +59,10 @@ class RemoteJSONAPI extends Remote {
         return;
       }
 
+      $myConfig = \Drupal::config('filefield_sources_jsonapi');
+      $username = $myConfig->get('username');
+      $password = $myConfig->get('password');
+
       // Check the headers to make sure it exists and is within the allowed
       // size.
       $ch = curl_init();
@@ -67,6 +71,8 @@ class RemoteJSONAPI extends Remote {
       curl_setopt($ch, CURLOPT_NOBODY, TRUE);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
       curl_setopt($ch, CURLOPT_HEADERFUNCTION, [get_called_class(), 'parseHeader']);
+      curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+      curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
       // Causes a warning if PHP safe mode is on.
       @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
 
@@ -160,6 +166,8 @@ class RemoteJSONAPI extends Remote {
         curl_setopt($ch, CURLOPT_WRITEFUNCTION, [get_called_class(), 'curlWrite']);
         // Causes a warning if PHP safe mode is on.
         @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
         $transfer_success = curl_exec($ch);
         curl_close($ch);
       }
