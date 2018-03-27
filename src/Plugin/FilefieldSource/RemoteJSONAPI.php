@@ -168,6 +168,7 @@ class RemoteJSONAPI extends Remote {
         @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
         curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, 'download=1');
         $transfer_success = curl_exec($ch);
         curl_close($ch);
       }
