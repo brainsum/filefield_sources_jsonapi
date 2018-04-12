@@ -35,5 +35,8 @@ filefield_sources_jsonapi.filefield_sources_jsonapi.*:
     itemsPerPage:
       type: string
       label: 'Items to display'
+    basicAuthentication:
+      type: boolean
+      label: 'Basic authentication'
     uuid:
       type: string

@@ -59,10 +59,18 @@ class RemoteJSONAPI extends Remote {
         return;
       }
 
-      $myConfig = \Drupal::config('filefield_sources_jsonapi');
-      $username = $myConfig->get('username');
-      $password = $myConfig->get('password');
+      // Check the basicAuthentication config value and if it is checked, we get
+      // the file with basic authentication.
+      $source = $input['filefield_remote_jsonapi']['source'];
+      $config = \Drupal::config("filefield_sources_jsonapi.filefield_sources_jsonapi.$source");
+      $basic_auth = $config->get('basicAuthentication');
+      if ($basic_auth) {
+        $myConfig = \Drupal::config('filefield_sources_jsonapi');
+        $username = $myConfig->get('username');
+        $password = $myConfig->get('password');
+      }
 
+      // @todo refactor the three curl function call.
       // Check the headers to make sure it exists and is within the allowed
       // size.
       $ch = curl_init();
@@ -71,8 +79,10 @@ class RemoteJSONAPI extends Remote {
       curl_setopt($ch, CURLOPT_NOBODY, TRUE);
       curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
       curl_setopt($ch, CURLOPT_HEADERFUNCTION, [get_called_class(), 'parseHeader']);
-      curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-      curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+      if ($basic_auth) {
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+      }
       // Causes a warning if PHP safe mode is on.
       @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
 
@@ -166,9 +176,10 @@ class RemoteJSONAPI extends Remote {
         curl_setopt($ch, CURLOPT_WRITEFUNCTION, [get_called_class(), 'curlWrite']);
         // Causes a warning if PHP safe mode is on.
         @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
-        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-        curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, 'download=1');
+        if ($basic_auth) {
+          curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+          curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+        }
         $transfer_success = curl_exec($ch);
         curl_close($ch);
       }
@@ -199,6 +210,23 @@ class RemoteJSONAPI extends Remote {
         if (!in_array($file->id(), $input['fids'])) {
           $input['fids'][] = $file->id();
         }
+
+        // If the transfer was succesfull we set the CURLOPT_POSTFIELDS.
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_HEADER, FALSE);
+        curl_setopt($ch, CURLOPT_NOBODY, TRUE);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+        if ($basic_auth) {
+          curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+          curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+        }
+        // Causes a warning if PHP safe mode is on.
+        @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, 'download=1');
+        curl_exec($ch);
+        curl_close($ch);
       }
 
       // Delete the temporary file.
@@ -254,6 +282,10 @@ class RemoteJSONAPI extends Remote {
         '#value' => '',
       ];
     }
+    $element['filefield_remote_jsonapi']['source'] = [
+      '#type' => 'hidden',
+      '#value' => '',
+    ];
 
     $class = '\Drupal\file\Element\ManagedFile';
     $ajax_settings = [
@@ -319,7 +351,7 @@ class RemoteJSONAPI extends Remote {
 
     $rendered_button = \Drupal::service('renderer')->render($button);
 
-    $content = \Drupal::service('renderer')->render($element['url']) . \Drupal::service('renderer')->render($element['alt']) . \Drupal::service('renderer')->render($element['title']) . \Drupal::service('renderer')->render($element['description']) . $rendered_button;
+    $content = \Drupal::service('renderer')->render($element['url']) . \Drupal::service('renderer')->render($element['alt']) . \Drupal::service('renderer')->render($element['title']) . \Drupal::service('renderer')->render($element['description']) . \Drupal::service('renderer')->render($element['source']) . $rendered_button;
 
     return '<div class="filefield-source filefield-source-remote_jsonapi clear-block">' . $content . '</div>';
   }

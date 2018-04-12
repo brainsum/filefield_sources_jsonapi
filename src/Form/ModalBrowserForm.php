@@ -13,6 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\filefield_sources_jsonapi\Entity\FileFieldSourcesJSONAPI;
 use GuzzleHttp\Client;
+use Drupal\Core\Url;
 
 /**
  * Implements the ModalBrowserForm form controller.
@@ -147,6 +148,9 @@ class ModalBrowserForm extends FormBase {
   public function buildInsertForm(array &$form, FormStateInterface $form_state) {
     $file = $form_state->get('fetched_file');
     $settings = $form_state->get('jsonapi_settings');
+    $actual_config = $settings['actual_config'];
+    $basic_auth = $actual_config->get('basicAuthentication');
+
     $form['title'] = [
       '#type' => 'item',
       '#title' => $this->t('Insert selected'),
@@ -156,9 +160,15 @@ class ModalBrowserForm extends FormBase {
       '#type' => 'container',
       '#attributes' => ['class' => ['insert-wrapper']],
     ];
+    if ($basic_auth) {
+      $uri = Url::fromRoute('filefield_sources_jsonapi.get_remote_file', ['url' => $file['thumbnail_url']])->toString();
+    }
+    else {
+      $uri = $file['thumbnail_url'];
+    }
     $form['wrapper']['image'] = [
       '#theme' => 'image',
-      '#uri' => $file['thumbnail_url'],
+      '#uri' => $uri,
       '#width' => '400',
     ];
     $form['wrapper']['detail'] = [
@@ -355,6 +365,9 @@ class ModalBrowserForm extends FormBase {
    *   Array of ajax commands to execute on submit of the modal form.
    */
   public function ajaxSubmitForm(array &$form, FormStateInterface $form_state) {
+    $settings = $form_state->get('jsonapi_settings');
+    $actual_config = $settings['actual_config'];
+
     // We begin building a new ajax response.
     $response = new AjaxResponse();
     if ($form_state->getErrors()) {
@@ -381,6 +394,7 @@ class ModalBrowserForm extends FormBase {
       if (isset($user_input['description'])) {
         $response->addCommand(new InvokeCommand($selector . " input[name$='[filefield_remote_jsonapi][description]']", 'val', [$user_input['description']]));
       }
+      $response->addCommand(new InvokeCommand($selector . " input[name$='[filefield_remote_jsonapi][source]']", 'val', [$actual_config->id()]));
       $response->addCommand(new InvokeCommand($selector . " input[type=submit]", 'mousedown'));
       $response->addCommand(new CloseModalDialogCommand());
     }
@@ -394,6 +408,7 @@ class ModalBrowserForm extends FormBase {
     $settings = $form_state->get('jsonapi_settings');
     $actual_config = $settings['actual_config'];
     $api_url_base = $this->getApiBaseUrl($actual_config->getApiUrl());
+    $basic_auth = $actual_config->get('basicAuthentication');
 
     $render = [];
     $render['top'] = [
@@ -525,9 +540,16 @@ class ModalBrowserForm extends FormBase {
             'event' => 'click',
           ];
         }
+        if ($basic_auth) {
+          $url = $api_url_base . $thumbnail_url;
+          $uri = Url::fromRoute('filefield_sources_jsonapi.get_remote_file', ['url' => $url])->toString();
+        }
+        else {
+          $uri = $api_url_base . $thumbnail_url;
+        }
         $img = [
           '#theme' => 'image',
-          '#uri' => $api_url_base . $thumbnail_url,
+          '#uri' => $uri,
           '#width' => '120',
         ];
         $render['lister']['media'][$media_id]['media_id'] = [

@@ -98,6 +98,12 @@ class FileFieldSourcesJSONAPIForm extends EntityForm {
       '#description' => t('Number of items per page for browser.'),
       '#default_value' => $config->getItemsPerPage(),
     ];
+    $form['basicAuthentication'] = [
+      '#type' => 'checkbox',
+      '#title' => t('Send basic authentication header'),
+      '#description' => t('Select if files can be accessed only with basic authentication.'),
+      '#default_value' => $config->get('basicAuthentication'),
+    ];
 
     return $form;
   }

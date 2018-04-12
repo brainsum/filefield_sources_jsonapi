@@ -46,3 +46,10 @@ entity.filefield_sources_jsonapi.delete_form:
     _permission: 'administer site configuration'
   options:
     _admin_route: TRUE
+
+filefield_sources_jsonapi.get_remote_file:
+  path: 'filefield_sources_jsonapi/get-remote-file'
+  defaults:
+    _controller: '\Drupal\filefield_sources_jsonapi\RemoteFileController::getRemoteFile'
+  requirements:
+    _permission: 'access content'
