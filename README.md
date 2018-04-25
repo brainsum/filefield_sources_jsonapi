@@ -302,7 +302,7 @@ with content:
 
     }
 
-After that you can use can set for 'Thumbnail URL attribute path':
+After that you can set for 'Thumbnail URL attribute path':
 - for files (in examples #2 Getting images from managed files):
 
       data->attributes->thumbnail_url
