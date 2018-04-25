@@ -57,7 +57,7 @@ class FileFieldSourcesJSONAPIForm extends EntityForm {
     $form['urlAttributePath'] = [
       '#type' => 'textfield',
       '#title' => $this->t('URL attribute path'),
-      '#description' => t('Enter attribute name for the file URL. E.g. data->relationships->field_image->included->attributes->url'),
+      '#description' => $this->t('Enter attribute name for the file URL. E.g. data->relationships->field_image->included->attributes->url'),
       '#default_value' => $config->getUrlAttributePath(),
     ];
     $form['thumbnailUrlAttributePath'] = [

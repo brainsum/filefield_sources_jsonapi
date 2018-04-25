@@ -45,7 +45,8 @@ CONFIGURATION
 ## Manage JSON API settings
 Configuration » Web services » JSON API file field sources
 - Label/machine name
-  - Label for the JSON API file field sources - selectable at field widget settings.
+  - Label for the JSON API file field sources - selectable at field widget
+  settings.
 - JSON Api URL
    - request URL, e.g. example.com/jsonapi/media/image
 - Params
