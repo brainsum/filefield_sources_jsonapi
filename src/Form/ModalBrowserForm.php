@@ -2,13 +2,16 @@
 
 namespace Drupal\filefield_sources_jsonapi\Form;
 
+use Drupal\Core\Form\FormBase;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\CloseModalDialogCommand;
 use Drupal\Core\Ajax\HtmlCommand;
 use Drupal\Core\Ajax\InvokeCommand;
-use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\filefield_sources_jsonapi\Entity\FileFieldSourcesJSONAPI;
@@ -19,6 +22,50 @@ use Drupal\Core\Url;
  * Implements the ModalBrowserForm form controller.
  */
 class ModalBrowserForm extends FormBase {
+
+  /**
+   * Entity form display storage.
+   *
+   * @var \Drupal\Core\Entity\EntityStorageInterface
+   */
+  protected $entityFormDisplayStorage;
+
+  /**
+   * Entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
+
+  /**
+   * {@inheritdoc}
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('entity_type.manager'),
+      $container->get('entity_field.manager')
+    );
+  }
+
+  /**
+   * BulkMediaUploadForm constructor.
+   *
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entityTypeManager
+   *   Entity type manager.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entityFieldManager
+   *   Entity field manager.
+   *
+   * @throws \Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException
+   */
+  public function __construct(
+    EntityTypeManagerInterface $entityTypeManager,
+    EntityFieldManagerInterface $entityFieldManager
+  ) {
+    $this->entityFormDisplayStorage = $entityTypeManager->getStorage('entity_form_display');
+    $this->entityFieldManager = $entityFieldManager;
+  }
 
   /**
    * {@inheritdoc}
@@ -42,9 +89,7 @@ class ModalBrowserForm extends FormBase {
     }
 
     $user_input = $form_state->getUserInput();
-    $field_widget_settings = \Drupal::entityTypeManager()
-      ->getStorage('entity_form_display')
-      ->load($entity_type . '.' . $bundle . '.' . $form_mode)
+    $field_widget_settings = $this->entityFormDisplayStorage->load($entity_type . '.' . $bundle . '.' . $form_mode)
       ->getComponent($field_name);
 
     if (!$settings) {
@@ -61,7 +106,7 @@ class ModalBrowserForm extends FormBase {
 
     $settings['cardinality'] = FieldStorageConfig::loadByName($entity_type, $field_name)
       ->getCardinality();
-    $field_settings = \Drupal::getContainer()->get('entity_field.manager')->getFieldDefinitions($entity_type, $bundle)[$field_name]->getSettings();
+    $field_settings = $this->entityFieldManager->getFieldDefinitions($entity_type, $bundle)[$field_name]->getSettings();
     $settings['field_settings'] = $field_settings;
 
     $actual_config = isset($settings['actual_config']) ? $settings['actual_config'] : NULL;
@@ -638,7 +683,7 @@ class ModalBrowserForm extends FormBase {
    */
   private function getJsonApiCall($rest_api_url) {
     $client = new Client();
-    $myConfig = \Drupal::config('filefield_sources_jsonapi');
+    $myConfig = $this->configFactory()->get('filefield_sources_jsonapi');
     $username = $myConfig->get('username');
     $password = $myConfig->get('password');
 

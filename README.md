@@ -1,12 +1,37 @@
-# File field source JSON API module
+CONTENTS OF THIS FILE
+---------------------
+   
+ * Introduction
+ * Restrictions
+ * Installation
+ * Configuration
+ * Examples
+
+
+INTRODUCTION
+------------
+
 Defines 'JSON API remote URL' file field source.
 
-## Restrictions
-- Widget/browser doesn't support multiple selecting. This means: You can set the
- cardinality to more than 1, but you can select remote images by one.
-- Works only with image fields.
+
+RESTRICTIONS
+------------
+
+Widget/browser doesn't support multiple selecting. This means: You can set the
+cardinality to more than 1, but you can select remote images by one.
+
+
+INSTALLATION
+------------
+ 
+Install as you would normally install a contributed Drupal module. Visit:
+https://www.drupal.org/docs/8/extending-drupal-8/installing-drupal-8-modules
+for further information.
+
   
-## Configuration
+CONFIGURATION
+-------------
+
 - Enable 'JSON API remote URL' on form display for image field widget.
 - Configure JSON API form widget settings.
 - Add TML Rest API basic auth credentials to your settings.php:
@@ -75,7 +100,9 @@ request params:
 
       data->relationships->field_image->included->attributes->filename
 
-## Examples
+
+EXAMPLES
+--------
 
 #### 1. Getting files from media image entities, field_image field
 
