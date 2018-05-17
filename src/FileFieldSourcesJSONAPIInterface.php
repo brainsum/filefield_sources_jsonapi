@@ -81,4 +81,12 @@ interface FileFieldSourcesJSONAPIInterface extends ConfigEntityInterface {
    */
   public function getItemsPerPage();
 
+  /**
+   * Returns the basicAuthentication value.
+   *
+   * @return string
+   *   The basicAuthentication value.
+   */
+  public function getBasicAuthentication();
+
 }

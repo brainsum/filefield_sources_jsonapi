@@ -194,7 +194,7 @@ class ModalBrowserForm extends FormBase {
     $file = $form_state->get('fetched_file');
     $settings = $form_state->get('jsonapi_settings');
     $actual_config = $settings['actual_config'];
-    $basic_auth = $actual_config->get('basicAuthentication');
+    $basic_auth = $actual_config->getBasicAuthentication();
 
     $form['title'] = [
       '#type' => 'item',
@@ -453,7 +453,7 @@ class ModalBrowserForm extends FormBase {
     $settings = $form_state->get('jsonapi_settings');
     $actual_config = $settings['actual_config'];
     $api_url_base = $this->getApiBaseUrl($actual_config->getApiUrl());
-    $basic_auth = $actual_config->get('basicAuthentication');
+    $basic_auth = $actual_config->getBasicAuthentication();
 
     $render = [];
     $render['top'] = [

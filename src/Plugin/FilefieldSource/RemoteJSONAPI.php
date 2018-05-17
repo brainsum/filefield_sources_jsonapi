@@ -62,8 +62,8 @@ class RemoteJSONAPI extends Remote {
       // Check the basicAuthentication config value and if it is checked, we get
       // the file with basic authentication.
       $source = $input['filefield_remote_jsonapi']['source'];
-      $config = \Drupal::config("filefield_sources_jsonapi.filefield_sources_jsonapi.$source");
-      $basic_auth = $config->get('basicAuthentication');
+      $config = FileFieldSourcesJSONAPI::load($source);
+      $basic_auth = $config->getBasicAuthentication();
       if ($basic_auth) {
         $myConfig = \Drupal::config('filefield_sources_jsonapi');
         $username = $myConfig->get('username');

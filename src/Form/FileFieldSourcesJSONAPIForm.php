@@ -102,7 +102,7 @@ class FileFieldSourcesJSONAPIForm extends EntityForm {
       '#type' => 'checkbox',
       '#title' => $this->t('Send basic authentication header'),
       '#description' => $this->t('Select if files can be accessed only with basic authentication.'),
-      '#default_value' => $config->get('basicAuthentication'),
+      '#default_value' => $config->getBasicAuthentication(),
     ];
 
     return $form;

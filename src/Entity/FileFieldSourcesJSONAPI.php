@@ -70,6 +70,8 @@ class FileFieldSourcesJSONAPI extends ConfigEntityBase implements FileFieldSourc
 
   protected $itemsPerPage = self::REMOTE_JSONAPI_LISTER_ITEM_NUM;
 
+  protected $basicAuthentication = FALSE;
+
   /**
    * {@inheritdoc}
    */
@@ -131,6 +133,13 @@ class FileFieldSourcesJSONAPI extends ConfigEntityBase implements FileFieldSourc
    */
   public function getItemsPerPage() {
     return $this->itemsPerPage;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getBasicAuthentication() {
+    return $this->basicAuthentication;
   }
 
   /**
