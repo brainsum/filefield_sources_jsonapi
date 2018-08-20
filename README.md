@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/brainsum/filefield_sources_jsonapi.svg?branch=8.x-1.x)](https://travis-ci.org/brainsum/filefield_sources_jsonapi
+[![Build Status](https://travis-ci.org/brainsum/filefield_sources_jsonapi.svg?branch=8.x-1.x)](https://travis-ci.org/brainsum/filefield_sources_jsonapi)
+
 
 CONTENTS OF THIS FILE
 ---------------------
