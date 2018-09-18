@@ -14,6 +14,7 @@ use Drupal\Core\Field\WidgetInterface;
 use Drupal\filefield_sources_jsonapi\Entity\FileFieldSourcesJSONAPI;
 use Drupal\image\Entity\ImageStyle;
 use Drupal\Component\Utility\NestedArray;
+use Drupal\Component\Utility\Html;
 
 /**
  * FileField source plugin to allow downloading a file from JSON Rest API.
@@ -246,6 +247,7 @@ class RemoteJSONAPI extends Remote {
       'bundle' => $element['#bundle'],
       'form_mode' => 'default',
       'field_name' => $element['#field_name'],
+      'wrapper' => Html::getClass(implode('-', $element['#field_parents'])),
     ];
     $element['filefield_remote_jsonapi'] = [
       '#weight' => 100.5,

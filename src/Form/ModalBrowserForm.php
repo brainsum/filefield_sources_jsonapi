@@ -77,7 +77,7 @@ class ModalBrowserForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $form_mode = NULL, $field_name = NULL) {
+  public function buildForm(array $form, FormStateInterface $form_state, $entity_type = NULL, $bundle = NULL, $form_mode = NULL, $field_name = NULL, $wrapper = NULL) {
     static $settings;
 
     $form['#attached']['library'][] = 'filefield_sources_jsonapi/modal';
@@ -97,6 +97,7 @@ class ModalBrowserForm extends FormBase {
     }
     $settings['sources'] = FileFieldSourcesJSONAPI::getSettingsOptionList($settings['sources']);
     $settings['field_name'] = $field_name;
+    $settings['wrapper'] = $wrapper;
 
     $settings['type'] = $field_widget_settings['type'];
     // @todo, refactor.
@@ -427,7 +428,7 @@ class ModalBrowserForm extends FormBase {
     else {
       $user_input = $form_state->getUserInput();
       $settings = $form_state->get('jsonapi_settings');
-      $selector = '.field--name-' . Html::getClass($settings['field_name']) . " .filefield-source-remote_jsonapi";
+      $selector = '#edit-' . $settings['wrapper'] . '-' . Html::getClass($settings['field_name']) . '-wrapper .filefield-source-remote_jsonapi';
       $file = $form_state->get('fetched_file');
       $response->addCommand(new InvokeCommand($selector . " input[name$='[filefield_remote_jsonapi][url]']", 'val', [$file['url']]));
       if (isset($user_input['alt'])) {

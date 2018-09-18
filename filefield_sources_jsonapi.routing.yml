@@ -1,5 +1,5 @@
 filefield_sources_jsonapi.modal_browser_form:
-  path: 'filefield_sources_jsonapi/modal-browser-form/{entity_type}/{bundle}/{form_mode}/{field_name}'
+  path: 'filefield_sources_jsonapi/modal-browser-form/{entity_type}/{bundle}/{form_mode}/{field_name}/{wrapper}'
   defaults:
     _form:  '\Drupal\filefield_sources_jsonapi\Form\ModalBrowserForm'
     _title: 'Media library'
