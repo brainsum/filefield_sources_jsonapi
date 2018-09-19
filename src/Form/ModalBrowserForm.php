@@ -428,7 +428,7 @@ class ModalBrowserForm extends FormBase {
     else {
       $user_input = $form_state->getUserInput();
       $settings = $form_state->get('jsonapi_settings');
-      $selector = '#edit-' . $settings['wrapper'] . '-' . Html::getClass($settings['field_name']) . '-wrapper .filefield-source-remote_jsonapi';
+      $selector = '.field--name-' . Html::getClass($settings['field_name']) . "[data-drupal-selector='edit-" . $settings['wrapper'] . '-' . Html::getClass($settings['field_name']) . "-wrapper'] .filefield-source-remote_jsonapi";
       $file = $form_state->get('fetched_file');
       $response->addCommand(new InvokeCommand($selector . " input[name$='[filefield_remote_jsonapi][url]']", 'val', [$file['url']]));
       if (isset($user_input['alt'])) {
