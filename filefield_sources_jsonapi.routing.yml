@@ -3,6 +3,7 @@ filefield_sources_jsonapi.modal_browser_form:
   defaults:
     _form:  '\Drupal\filefield_sources_jsonapi\Form\ModalBrowserForm'
     _title: 'Media library'
+    wrapper: ''
   requirements:
     _permission: 'access content'
 
