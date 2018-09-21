@@ -5,6 +5,7 @@ namespace Drupal\filefield_sources_jsonapi;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Drupal\Component\Utility\Unicode;
 
 /**
  * Retrieve file via curl call for filefield source JSON API.
@@ -25,6 +26,8 @@ class RemoteFileController extends ControllerBase {
     $filename = rawurldecode(basename($url_info['path']));
     $filepath = file_create_filename($filename, $temporary_directory);
 
+    $fp = @fopen($filepath, 'w');
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_HEADER, FALSE);
@@ -32,15 +35,20 @@ class RemoteFileController extends ControllerBase {
     @curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
     curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
     curl_setopt($ch, CURLOPT_USERPWD, "$username:$password");
+    curl_setopt($ch, CURLOPT_FILE, $fp);
 
     $file_contents = curl_exec($ch);
+    curl_close($ch);
+    fclose($fp);
 
-    if (isset($file_contents)) {
-      if ($fp = @fopen($filepath, 'w')) {
-        fwrite($fp, $file_contents);
-        fclose($fp);
-        return new BinaryFileResponse($filepath, 200);
-      }
+    if ($file_contents !== NULL) {
+      $mime = \Drupal::service('file.mime_type.guesser')->guess($filepath);
+      $headers = [
+        'Content-Type' => $mime . '; name="' . Unicode::mimeHeaderEncode(basename($filepath)) . '"',
+        'Content-Length' => filesize($filepath),
+        'Cache-Control' => 'private',
+      ];
+      return new BinaryFileResponse($filepath, 200, $headers, FALSE);
     }
 
     throw new NotFoundHttpException();
